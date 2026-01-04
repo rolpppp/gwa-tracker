@@ -2,7 +2,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/database.dart';
+import 'package:klaro/core/logic/grading_system.dart';
 import 'package:klaro/features/course_management/logic/grade_calculator.dart';
+import 'package:klaro/features/course_management/logic/course_grade_provider.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_component_modal.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_assessment_modal.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
@@ -40,12 +42,8 @@ class CourseDetailScreen extends ConsumerWidget {
         padding: const EdgeInsets.all(24),
         child: Column(
           children: [
-            // 2. PASS components to the Header for Calculation
-            componentsAsync.when(
-              data: (components) => _CourseHeader(course: course, components: components),
-              loading: () => const CircularProgressIndicator(),
-              error: (_, __) => const Text("Error loading data"),
-            ),
+            // 2. Show the Header
+            _CourseHeader(course: course),
             
             const SizedBox(height: 24),
             
@@ -78,21 +76,17 @@ class CourseDetailScreen extends ConsumerWidget {
   }
 }
 
-// --- NEW WIDGET: Smart Header that Calculates Grades ---
 class _CourseHeader extends ConsumerWidget {
   final Course course;
-  final List<GradingComponent> components;
-
-  const _CourseHeader({required this.course, required this.components});
+  // We don't strictly need the components list passed here anymore
+  // because the Provider handles the fetching.
+  const _CourseHeader({required this.course}); 
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    // We need to fetch assessments for ALL components to calculate the total grade.
-    // This is a bit complex in a List, but for MVP we will calculate it per component.
-    
-    // NOTE: In a real app, we would have a specialized Provider that joins this data.
-    // For now, the "Overall Grade" will display based on individual component completion.
-    
+    // WATCH THE CALCULATED GRADE
+    final gradeAsync = ref.watch(courseStandingProvider(course.id));
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -109,8 +103,17 @@ class _CourseHeader extends ConsumerWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _StatItem(label: "Target", value: "${course.targetGwa}"),
-              // Placeholder for Real Calculation (We need the Assesssments data first)
-              const _StatItem(label: "Current Grade", value: "---", isHighlight: true),
+              
+              // THE LIVE DATA
+              gradeAsync.when(
+                data: (standing) => _StatItem(
+                  label: "Current Grade", 
+                  value: "${standing.finalGrade} (${standing.percentage.toStringAsFixed(1)}%)", 
+                  colorOverride: Color(GradingSystem.getGradeColor(standing.finalGrade)),
+                ),
+                loading: () => const _StatItem(label: "Current", value: "..."),
+                error: (_,__) => const _StatItem(label: "Current", value: "Err"),
+              ),
             ],
           )
         ],
@@ -119,28 +122,29 @@ class _CourseHeader extends ConsumerWidget {
   }
 }
 
+// Updated _StatItem to accept Color
 class _StatItem extends StatelessWidget {
   final String label;
   final String value;
-  final bool isHighlight;
-  const _StatItem({required this.label, required this.value, this.isHighlight = false});
+  final Color? colorOverride;
+  
+  const _StatItem({required this.label, required this.value, this.colorOverride});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.end, // Align right for cleaner look
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
         Text(value, style: TextStyle(
-          fontSize: 24, 
+          fontSize: 20, 
           fontWeight: FontWeight.bold,
-          color: isHighlight ? Theme.of(context).primaryColor : Colors.black
+          color: colorOverride ?? Colors.black
         )),
       ],
     );
   }
 }
-
 // --- UPDATED TILE: Opens Assessment Modal ---
 class _GradingComponentTile extends ConsumerWidget {
   final GradingComponent component;
