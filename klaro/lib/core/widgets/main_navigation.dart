@@ -40,35 +40,33 @@ class _MainNavigationState extends State<MainNavigation> {
             )
           : null,
       floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: SafeArea(
-        child: BottomAppBar(
-          shape: const CircularNotchedRectangle(),
-          notchMargin: 8.0,
-          child: SizedBox(
-            height: 56,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
-                Expanded(
-                  child: _buildNavItem(
-                    icon: PhosphorIcons.house(),
-                    iconFilled: PhosphorIcons.house(PhosphorIconsStyle.fill),
-                    label: 'Dashboard',
-                    index: 0,
-                  ),
-                ),
-                const SizedBox(width: 40), // Space for FAB
-                Expanded(
-                  child: _buildNavItem(
-                    icon: PhosphorIcons.gear(),
-                    iconFilled: PhosphorIcons.gear(PhosphorIconsStyle.fill),
-                    label: 'Settings',
-                    index: 1,
-                  ),
-                ),
-              ],
+      bottomNavigationBar: BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8.0,
+        padding: EdgeInsets.zero,
+        height: 70,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          crossAxisAlignment: CrossAxisAlignment.center,
+          children: [
+            Expanded(
+              child: _buildNavItem(
+                icon: PhosphorIcons.house(),
+                iconFilled: PhosphorIcons.house(PhosphorIconsStyle.fill),
+                label: 'Dashboard',
+                index: 0,
+              ),
             ),
-          ),
+            const SizedBox(width: 48), // Space for FAB
+            Expanded(
+              child: _buildNavItem(
+                icon: PhosphorIcons.gear(),
+                iconFilled: PhosphorIcons.gear(PhosphorIconsStyle.fill),
+                label: 'Settings',
+                index: 1,
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -81,41 +79,41 @@ class _MainNavigationState extends State<MainNavigation> {
     required int index,
   }) {
     final isSelected = _currentIndex == index;
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _currentIndex = index;
-        });
-      },
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 4, horizontal: 4),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isSelected ? iconFilled : icon,
-              color: isSelected
-                  ? Theme.of(context).colorScheme.secondary
-                  : Colors.grey,
-              size: 22,
-            ),
-            const SizedBox(height: 2),
-            FittedBox(
-              fit: BoxFit.scaleDown,
-              child: Text(
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          setState(() {
+            _currentIndex = index;
+          });
+        },
+        child: Container(
+          height: 70,
+          alignment: Alignment.center,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                isSelected ? iconFilled : icon,
+                color: isSelected
+                    ? Theme.of(context).colorScheme.secondary
+                    : Colors.grey,
+                size: 24,
+              ),
+              const SizedBox(height: 4),
+              Text(
                 label,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 12,
                   color: isSelected
                       ? Theme.of(context).colorScheme.secondary
                       : Colors.grey,
                   fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
                 ),
-                maxLines: 1,
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );
