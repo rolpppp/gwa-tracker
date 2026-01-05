@@ -15,7 +15,23 @@ part 'database.g.dart';
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
-  int get schemaVersion => 1;
+  @override
+  int get schemaVersion => 2;
+
+  @override
+  MigrationStrategy get migration {
+    return MigrationStrategy(
+      onCreate: (Migrator m) async {
+        await m.createAll();
+      },
+      onUpgrade: (Migrator m, int from, int to) async {
+        if (from < 2) {
+          // Add isGoal column to assessments table
+          await m.addColumn(assessments, assessments.isGoal as GeneratedColumn);
+        }
+      },
+    );
+  }
 
   // 1. Fetch all Components for a specific Course
   Future<List<GradingComponent>> getComponentsForCourse(int courseId) {

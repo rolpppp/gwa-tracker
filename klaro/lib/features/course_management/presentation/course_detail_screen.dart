@@ -7,6 +7,7 @@ import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 import 'package:klaro/features/course_management/logic/course_grade_provider.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_component_modal.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_assessment_modal.dart';
+import 'package:klaro/features/course_management/presentation/widgets/goal_simulator_modal.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 // Providers for components and assessments
@@ -78,14 +79,15 @@ class CourseDetailScreen extends ConsumerWidget {
 
 class _CourseHeader extends ConsumerWidget {
   final Course course;
-  // We don't strictly need the components list passed here anymore
-  // because the Provider handles the fetching.
   const _CourseHeader({required this.course}); 
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     // WATCH THE CALCULATED GRADE
     final gradeAsync = ref.watch(courseStandingProvider(course.id));
+    
+    // WATCH COMPONENTS to calculate total weight used
+    final componentsAsync = ref.watch(courseComponentsProvider(course.id));
 
     return Container(
       width: double.infinity,
@@ -104,42 +106,240 @@ class _CourseHeader extends ConsumerWidget {
             children: [
               _StatItem(label: "Target", value: "${course.targetGwa}"),
               
-              // THE LIVE DATA
+              // THE LIVE DATA - Shows Real vs Projected
               gradeAsync.when(
-                data: (standing) => _StatItem(
-                  label: "Current Grade", 
-                  value: "${standing.finalGrade} (${standing.percentage.toStringAsFixed(1)}%)", 
-                  colorOverride: Color(GradingSystem.getGradeColor(standing.finalGrade)),
-                ),
+                data: (standing) {
+                  // Check if we have goals active (Real != Projected)
+                  bool hasGoals = standing.realPercentage != standing.projectedPercentage;
+
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.end,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            hasGoals ? "Projected Grade" : "Current Grade", 
+                            style: const TextStyle(color: Colors.grey, fontSize: 12),
+                          ),
+                          if (hasGoals) ...[
+                            const SizedBox(width: 4),
+                            const Icon(Icons.flag_circle, color: Colors.purpleAccent, size: 14),
+                          ],
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      
+                      // If we have goals, show "Projected" big and "Real" small
+                      if (hasGoals) ...[
+                        GestureDetector(
+                          onTap: () {
+                            // Show percentage tooltip
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text("Grade Breakdown"),
+                                content: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      "Projected: ${standing.projectedPercentage.toStringAsFixed(1)}%",
+                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.purpleAccent),
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Text(
+                                      "Real: ${standing.realPercentage.toStringAsFixed(1)}%",
+                                      style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
+                                    ),
+                                  ],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text("Close"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: Colors.purpleAccent.withOpacity(0.1),
+                              borderRadius: BorderRadius.circular(8),
+                              border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
+                            ),
+                            child: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Column(
+                                  crossAxisAlignment: CrossAxisAlignment.end,
+                                  children: [
+                                    Text(
+                                      standing.projectedGrade.toStringAsFixed(2),
+                                      style: const TextStyle(
+                                        fontSize: 28, 
+                                        fontWeight: FontWeight.bold, 
+                                        color: Colors.purpleAccent,
+                                      ),
+                                    ),
+                                    Text(
+                                      "Real: ${standing.realGrade.toStringAsFixed(2)}",
+                                      style: TextStyle(
+                                        fontSize: 11, 
+                                        color: Colors.grey.shade600,
+                                        fontWeight: FontWeight.w500,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(width: 6),
+                                Icon(Icons.info_outline, size: 16, color: Colors.purpleAccent.withOpacity(0.6)),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ] else ...[
+                        // Standard View with info icon
+                        GestureDetector(
+                          onTap: () {
+                            // Show percentage tooltip
+                            showDialog(
+                              context: context,
+                              builder: (ctx) => AlertDialog(
+                                title: const Text("Grade Details"),
+                                content: Text(
+                                  "Percentage: ${standing.realPercentage.toStringAsFixed(1)}%",
+                                  style: const TextStyle(fontSize: 16),
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(ctx),
+                                    child: const Text("Close"),
+                                  ),
+                                ],
+                              ),
+                            );
+                          },
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                standing.realGrade.toStringAsFixed(2),
+                                style: TextStyle(
+                                  fontSize: 28, 
+                                  fontWeight: FontWeight.bold, 
+                                  color: Color(GradingSystem.getGradeColor(standing.realGrade)),
+                                ),
+                              ),
+                              const SizedBox(width: 6),
+                              Icon(
+                                Icons.info_outline, 
+                                size: 16, 
+                                color: Colors.grey.shade400,
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  );
+                },
                 loading: () => const _StatItem(label: "Current", value: "..."),
                 error: (_,__) => const _StatItem(label: "Current", value: "Err"),
               ),
             ],
-          )
+          ),
+          const SizedBox(height: 16),
+          
+          // Goal Simulator Button
+          componentsAsync.when(
+            data: (components) {
+              // Calculate total weight used
+              double totalWeightUsed = 0.0;
+              for (var c in components) {
+                totalWeightUsed += c.weightPercent;
+              }
+              
+              return Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [Colors.purple.shade50, Colors.blue.shade50],
+                  ),
+                  borderRadius: BorderRadius.circular(16),
+                  border: Border.all(color: Colors.purple.shade200),
+                ),
+                child: Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () {
+                      // Get current standing value
+                      final standingValue = gradeAsync.value;
+                      if (standingValue != null) {
+                        showModalBottomSheet(
+                          context: context,
+                          isScrollControlled: true,
+                          shape: const RoundedRectangleBorder(
+                            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                          ),
+                          builder: (ctx) => GoalSimulatorModal(
+                            currentStanding: standingValue,
+                            totalWeightUsed: totalWeightUsed,
+                          ),
+                        );
+                      }
+                    },
+                    borderRadius: BorderRadius.circular(16),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.trending_up, color: Colors.purple.shade700),
+                          const SizedBox(width: 8),
+                          Text(
+                            "Grade Simulator",
+                            style: TextStyle(
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                              color: Colors.purple.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
         ],
       ),
     );
   }
 }
 
-// Updated _StatItem to accept Color
+// Simple stat display widget
 class _StatItem extends StatelessWidget {
   final String label;
   final String value;
-  final Color? colorOverride;
   
-  const _StatItem({required this.label, required this.value, this.colorOverride});
+  const _StatItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.end, // Align right for cleaner look
+      crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        Text(value, style: TextStyle(
+        Text(value, style: const TextStyle(
           fontSize: 20, 
           fontWeight: FontWeight.bold,
-          color: colorOverride ?? Colors.black
+          color: Colors.black,
         )),
       ],
     );
@@ -149,6 +349,64 @@ class _StatItem extends StatelessWidget {
 class _GradingComponentTile extends ConsumerWidget {
   final GradingComponent component;
   const _GradingComponentTile({required this.component});
+
+  Future<void> _deleteComponent(BuildContext context, WidgetRef ref) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Component"),
+        content: Text("Delete '${component.name}' and all its assessments?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      // Delete all assessments first
+      await (db.delete(db.assessments)
+        ..where((a) => a.componentId.equals(component.id))).go();
+      // Then delete the component
+      await (db.delete(db.gradingComponents)
+        ..where((c) => c.id.equals(component.id))).go();
+    }
+  }
+
+  Future<void> _deleteAssessment(BuildContext context, WidgetRef ref, Assessment assessment) async {
+    final confirmed = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Assessment"),
+        content: Text("Delete '${assessment.name}'?"),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: const Text("Cancel"),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            style: TextButton.styleFrom(foregroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmed == true) {
+      final db = ref.read(databaseProvider);
+      await (db.delete(db.assessments)
+        ..where((a) => a.id.equals(assessment.id))).go();
+    }
+  }
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -161,12 +419,95 @@ class _GradingComponentTile extends ConsumerWidget {
         data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
         child: ExpansionTile(
           title: Text(component.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+          trailing: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Show expand/collapse icon
+              const Icon(Icons.expand_more),
+              const SizedBox(width: 8),
+              // Three-dot menu
+              PopupMenuButton<String>(
+                icon: const Icon(Icons.more_vert, size: 20),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                itemBuilder: (context) => [
+                  const PopupMenuItem(
+                    value: 'edit',
+                    child: Row(
+                      children: [
+                        Icon(Icons.edit, size: 18, color: Colors.blue),
+                        SizedBox(width: 12),
+                        Text('Edit Component'),
+                      ],
+                    ),
+                  ),
+                  const PopupMenuItem(
+                    value: 'delete',
+                    child: Row(
+                      children: [
+                        Icon(Icons.delete, size: 18, color: Colors.red),
+                        SizedBox(width: 12),
+                        Text('Delete Component', style: TextStyle(color: Colors.red)),
+                      ],
+                    ),
+                  ),
+                ],
+                onSelected: (value) {
+                  if (value == 'edit') {
+                    showModalBottomSheet(
+                      context: context,
+                      isScrollControlled: true,
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                      ),
+                      builder: (ctx) => AddComponentModal(
+                        courseId: component.courseId,
+                        component: component,
+                      ),
+                    );
+                  } else if (value == 'delete') {
+                    _deleteComponent(context, ref);
+                  }
+                },
+              ),
+            ],
+          ),
           // Calculate the % for this specific bucket
           subtitle: assessmentsAsync.when(
             data: (assessments) {
-              // MATH LOGIC HERE
-              final score = GradeCalculator.calculateComponentScore(assessments);
-              return Text("${score.toStringAsFixed(1)}% / 100% (Weight: ${(component.weightPercent * 100).toInt()}%)");
+              // Separate real and all assessments
+              final realAssessments = assessments.where((a) => !a.isGoal).toList();
+              final hasGoals = assessments.any((a) => a.isGoal);
+              
+              final realScore = GradeCalculator.calculateComponentScore(realAssessments);
+              final projectedScore = GradeCalculator.calculateComponentScore(assessments);
+              
+              if (hasGoals) {
+                return RichText(
+                  text: TextSpan(
+                    style: DefaultTextStyle.of(context).style,
+                    children: [
+                      TextSpan(
+                        text: "${projectedScore.toStringAsFixed(1)}%",
+                        style: const TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold),
+                      ),
+                      TextSpan(
+                        text: " (Real: ${realScore.toStringAsFixed(1)}%) ",
+                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                      ),
+                      TextSpan(
+                        text: "• Weight: ${(component.weightPercent * 100).toInt()}%",
+                        style: TextStyle(color: Colors.grey.shade600),
+                      ),
+                    ],
+                  ),
+                );
+              }
+              
+              return Text(
+                "${realScore.toStringAsFixed(1)}% / 100% • Weight: ${(component.weightPercent * 100).toInt()}%",
+              );
             },
             loading: () => const Text("Loading..."),
             error: (_,__) => const Text("Error"),
@@ -176,9 +517,37 @@ class _GradingComponentTile extends ConsumerWidget {
               data: (assessments) => Column(
                 children: [
                   ...assessments.map((a) => ListTile(
-                    title: Text(a.name),
+                    // VISUAL DISTINCTION FOR GOALS
+                    tileColor: a.isGoal ? Colors.purple.withOpacity(0.05) : null,
+                    leading: a.isGoal ? const Icon(Icons.flag_circle_outlined, color: Colors.purple) : null,
+                    
+                    title: Text(
+                      a.name,
+                      style: TextStyle(
+                        fontStyle: a.isGoal ? FontStyle.italic : FontStyle.normal,
+                        color: a.isGoal ? Colors.purple : Colors.black,
+                      ),
+                    ),
                     subtitle: a.isExcused ? const Text("Excused", style: TextStyle(color: Colors.orange)) : null,
-                    trailing: Text("${a.scoreObtained} / ${a.totalItems}"),
+                    trailing: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          "${a.scoreObtained} / ${a.totalItems}",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: a.isGoal ? Colors.purple : Colors.black,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        IconButton(
+                          icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                          onPressed: () => _deleteAssessment(context, ref, a),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                        ),
+                      ],
+                    ),
                     onTap: () {
                       // OPEN MODAL: Edit Assessment
                       showModalBottomSheet(

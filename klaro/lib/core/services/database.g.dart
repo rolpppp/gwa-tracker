@@ -1060,6 +1060,19 @@ class $AssessmentsTable extends Assessments
     ),
     defaultValue: const Constant(false),
   );
+  static const VerificationMeta _isGoalMeta = const VerificationMeta('isGoal');
+  @override
+  late final GeneratedColumn<bool> isGoal = GeneratedColumn<bool>(
+    'is_goal',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_goal" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
   static const VerificationMeta _componentIdMeta = const VerificationMeta(
     'componentId',
   );
@@ -1081,6 +1094,7 @@ class $AssessmentsTable extends Assessments
     scoreObtained,
     totalItems,
     isExcused,
+    isGoal,
     componentId,
   ];
   @override
@@ -1131,6 +1145,12 @@ class $AssessmentsTable extends Assessments
         isExcused.isAcceptableOrUnknown(data['is_excused']!, _isExcusedMeta),
       );
     }
+    if (data.containsKey('is_goal')) {
+      context.handle(
+        _isGoalMeta,
+        isGoal.isAcceptableOrUnknown(data['is_goal']!, _isGoalMeta),
+      );
+    }
     if (data.containsKey('component_id')) {
       context.handle(
         _componentIdMeta,
@@ -1171,6 +1191,10 @@ class $AssessmentsTable extends Assessments
         DriftSqlType.bool,
         data['${effectivePrefix}is_excused'],
       )!,
+      isGoal: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_goal'],
+      )!,
       componentId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}component_id'],
@@ -1190,6 +1214,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
   final double scoreObtained;
   final double totalItems;
   final bool isExcused;
+  final bool isGoal;
   final int componentId;
   const Assessment({
     required this.id,
@@ -1197,6 +1222,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
     required this.scoreObtained,
     required this.totalItems,
     required this.isExcused,
+    required this.isGoal,
     required this.componentId,
   });
   @override
@@ -1207,6 +1233,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
     map['score_obtained'] = Variable<double>(scoreObtained);
     map['total_items'] = Variable<double>(totalItems);
     map['is_excused'] = Variable<bool>(isExcused);
+    map['is_goal'] = Variable<bool>(isGoal);
     map['component_id'] = Variable<int>(componentId);
     return map;
   }
@@ -1218,6 +1245,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
       scoreObtained: Value(scoreObtained),
       totalItems: Value(totalItems),
       isExcused: Value(isExcused),
+      isGoal: Value(isGoal),
       componentId: Value(componentId),
     );
   }
@@ -1233,6 +1261,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
       scoreObtained: serializer.fromJson<double>(json['scoreObtained']),
       totalItems: serializer.fromJson<double>(json['totalItems']),
       isExcused: serializer.fromJson<bool>(json['isExcused']),
+      isGoal: serializer.fromJson<bool>(json['isGoal']),
       componentId: serializer.fromJson<int>(json['componentId']),
     );
   }
@@ -1245,6 +1274,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
       'scoreObtained': serializer.toJson<double>(scoreObtained),
       'totalItems': serializer.toJson<double>(totalItems),
       'isExcused': serializer.toJson<bool>(isExcused),
+      'isGoal': serializer.toJson<bool>(isGoal),
       'componentId': serializer.toJson<int>(componentId),
     };
   }
@@ -1255,6 +1285,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
     double? scoreObtained,
     double? totalItems,
     bool? isExcused,
+    bool? isGoal,
     int? componentId,
   }) => Assessment(
     id: id ?? this.id,
@@ -1262,6 +1293,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
     scoreObtained: scoreObtained ?? this.scoreObtained,
     totalItems: totalItems ?? this.totalItems,
     isExcused: isExcused ?? this.isExcused,
+    isGoal: isGoal ?? this.isGoal,
     componentId: componentId ?? this.componentId,
   );
   Assessment copyWithCompanion(AssessmentsCompanion data) {
@@ -1275,6 +1307,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
           ? data.totalItems.value
           : this.totalItems,
       isExcused: data.isExcused.present ? data.isExcused.value : this.isExcused,
+      isGoal: data.isGoal.present ? data.isGoal.value : this.isGoal,
       componentId: data.componentId.present
           ? data.componentId.value
           : this.componentId,
@@ -1289,14 +1322,22 @@ class Assessment extends DataClass implements Insertable<Assessment> {
           ..write('scoreObtained: $scoreObtained, ')
           ..write('totalItems: $totalItems, ')
           ..write('isExcused: $isExcused, ')
+          ..write('isGoal: $isGoal, ')
           ..write('componentId: $componentId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, name, scoreObtained, totalItems, isExcused, componentId);
+  int get hashCode => Object.hash(
+    id,
+    name,
+    scoreObtained,
+    totalItems,
+    isExcused,
+    isGoal,
+    componentId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -1306,6 +1347,7 @@ class Assessment extends DataClass implements Insertable<Assessment> {
           other.scoreObtained == this.scoreObtained &&
           other.totalItems == this.totalItems &&
           other.isExcused == this.isExcused &&
+          other.isGoal == this.isGoal &&
           other.componentId == this.componentId);
 }
 
@@ -1315,6 +1357,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
   final Value<double> scoreObtained;
   final Value<double> totalItems;
   final Value<bool> isExcused;
+  final Value<bool> isGoal;
   final Value<int> componentId;
   const AssessmentsCompanion({
     this.id = const Value.absent(),
@@ -1322,6 +1365,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
     this.scoreObtained = const Value.absent(),
     this.totalItems = const Value.absent(),
     this.isExcused = const Value.absent(),
+    this.isGoal = const Value.absent(),
     this.componentId = const Value.absent(),
   });
   AssessmentsCompanion.insert({
@@ -1330,6 +1374,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
     required double scoreObtained,
     required double totalItems,
     this.isExcused = const Value.absent(),
+    this.isGoal = const Value.absent(),
     required int componentId,
   }) : name = Value(name),
        scoreObtained = Value(scoreObtained),
@@ -1341,6 +1386,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
     Expression<double>? scoreObtained,
     Expression<double>? totalItems,
     Expression<bool>? isExcused,
+    Expression<bool>? isGoal,
     Expression<int>? componentId,
   }) {
     return RawValuesInsertable({
@@ -1349,6 +1395,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
       if (scoreObtained != null) 'score_obtained': scoreObtained,
       if (totalItems != null) 'total_items': totalItems,
       if (isExcused != null) 'is_excused': isExcused,
+      if (isGoal != null) 'is_goal': isGoal,
       if (componentId != null) 'component_id': componentId,
     });
   }
@@ -1359,6 +1406,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
     Value<double>? scoreObtained,
     Value<double>? totalItems,
     Value<bool>? isExcused,
+    Value<bool>? isGoal,
     Value<int>? componentId,
   }) {
     return AssessmentsCompanion(
@@ -1367,6 +1415,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
       scoreObtained: scoreObtained ?? this.scoreObtained,
       totalItems: totalItems ?? this.totalItems,
       isExcused: isExcused ?? this.isExcused,
+      isGoal: isGoal ?? this.isGoal,
       componentId: componentId ?? this.componentId,
     );
   }
@@ -1389,6 +1438,9 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
     if (isExcused.present) {
       map['is_excused'] = Variable<bool>(isExcused.value);
     }
+    if (isGoal.present) {
+      map['is_goal'] = Variable<bool>(isGoal.value);
+    }
     if (componentId.present) {
       map['component_id'] = Variable<int>(componentId.value);
     }
@@ -1403,6 +1455,7 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
           ..write('scoreObtained: $scoreObtained, ')
           ..write('totalItems: $totalItems, ')
           ..write('isExcused: $isExcused, ')
+          ..write('isGoal: $isGoal, ')
           ..write('componentId: $componentId')
           ..write(')'))
         .toString();
@@ -2549,6 +2602,7 @@ typedef $$AssessmentsTableCreateCompanionBuilder =
       required double scoreObtained,
       required double totalItems,
       Value<bool> isExcused,
+      Value<bool> isGoal,
       required int componentId,
     });
 typedef $$AssessmentsTableUpdateCompanionBuilder =
@@ -2558,6 +2612,7 @@ typedef $$AssessmentsTableUpdateCompanionBuilder =
       Value<double> scoreObtained,
       Value<double> totalItems,
       Value<bool> isExcused,
+      Value<bool> isGoal,
       Value<int> componentId,
     });
 
@@ -2622,6 +2677,11 @@ class $$AssessmentsTableFilterComposer
     builder: (column) => ColumnFilters(column),
   );
 
+  ColumnFilters<bool> get isGoal => $composableBuilder(
+    column: $table.isGoal,
+    builder: (column) => ColumnFilters(column),
+  );
+
   $$GradingComponentsTableFilterComposer get componentId {
     final $$GradingComponentsTableFilterComposer composer = $composerBuilder(
       composer: this,
@@ -2680,6 +2740,11 @@ class $$AssessmentsTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<bool> get isGoal => $composableBuilder(
+    column: $table.isGoal,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$GradingComponentsTableOrderingComposer get componentId {
     final $$GradingComponentsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2731,6 +2796,9 @@ class $$AssessmentsTableAnnotationComposer
 
   GeneratedColumn<bool> get isExcused =>
       $composableBuilder(column: $table.isExcused, builder: (column) => column);
+
+  GeneratedColumn<bool> get isGoal =>
+      $composableBuilder(column: $table.isGoal, builder: (column) => column);
 
   $$GradingComponentsTableAnnotationComposer get componentId {
     final $$GradingComponentsTableAnnotationComposer composer =
@@ -2790,6 +2858,7 @@ class $$AssessmentsTableTableManager
                 Value<double> scoreObtained = const Value.absent(),
                 Value<double> totalItems = const Value.absent(),
                 Value<bool> isExcused = const Value.absent(),
+                Value<bool> isGoal = const Value.absent(),
                 Value<int> componentId = const Value.absent(),
               }) => AssessmentsCompanion(
                 id: id,
@@ -2797,6 +2866,7 @@ class $$AssessmentsTableTableManager
                 scoreObtained: scoreObtained,
                 totalItems: totalItems,
                 isExcused: isExcused,
+                isGoal: isGoal,
                 componentId: componentId,
               ),
           createCompanionCallback:
@@ -2806,6 +2876,7 @@ class $$AssessmentsTableTableManager
                 required double scoreObtained,
                 required double totalItems,
                 Value<bool> isExcused = const Value.absent(),
+                Value<bool> isGoal = const Value.absent(),
                 required int componentId,
               }) => AssessmentsCompanion.insert(
                 id: id,
@@ -2813,6 +2884,7 @@ class $$AssessmentsTableTableManager
                 scoreObtained: scoreObtained,
                 totalItems: totalItems,
                 isExcused: isExcused,
+                isGoal: isGoal,
                 componentId: componentId,
               ),
           withReferenceMapper: (p0) => p0

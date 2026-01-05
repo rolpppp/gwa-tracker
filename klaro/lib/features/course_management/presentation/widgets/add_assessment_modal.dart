@@ -17,6 +17,7 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
   final _nameCtrl = TextEditingController();
   final _scoreCtrl = TextEditingController();
   final _totalCtrl = TextEditingController();
+  bool _isGoal = false; 
   
   bool _isExcused = false;
 
@@ -29,6 +30,7 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
       _scoreCtrl.text = widget.assessment!.scoreObtained.toString();
       _totalCtrl.text = widget.assessment!.totalItems.toString();
       _isExcused = widget.assessment!.isExcused;
+      _isGoal = widget.assessment!.isGoal;
     }
   }
 
@@ -46,6 +48,7 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
             totalItems: Value(double.parse(_totalCtrl.text)),
             componentId: Value(widget.componentId),
             isExcused: Value(_isExcused),
+            isGoal: Value(_isGoal),
           ),
         );
       } else {
@@ -57,6 +60,7 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
             totalItems: double.parse(_totalCtrl.text),
             componentId: widget.componentId,
             isExcused: Value(_isExcused),
+            isGoal: Value(_isGoal),
           ),
         );
       }
@@ -114,6 +118,14 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
             value: _isExcused,
             onChanged: (val) => setState(() => _isExcused = val),
             contentPadding: EdgeInsets.zero,
+          ),
+
+          SwitchListTile(
+            title: const Text("Is this a Goal?"),
+            subtitle: const Text("Mark as a target/hypothetical score"),
+            activeColor: Colors.purpleAccent,
+            value: _isGoal,
+            onChanged: (val) => setState(() => _isGoal = val),
           ),
           
           const SizedBox(height: 24),

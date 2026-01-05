@@ -5,7 +5,13 @@ import 'package:klaro/core/theme/app_theme.dart'; // To access colors
 
 class AddComponentModal extends ConsumerStatefulWidget {
   final int courseId;
-  const AddComponentModal({super.key, required this.courseId});
+  final GradingComponent? component; // Optional: for editing
+  
+  const AddComponentModal({
+    super.key, 
+    required this.courseId,
+    this.component,
+  });
 
   @override
   ConsumerState<AddComponentModal> createState() => _AddComponentModalState();
@@ -15,6 +21,16 @@ class _AddComponentModalState extends ConsumerState<AddComponentModal> {
   final _nameCtrl = TextEditingController();
   final _weightCtrl = TextEditingController();
   final _formKey = GlobalKey<FormState>();
+
+  @override
+  void initState() {
+    super.initState();
+    // Pre-fill if editing
+    if (widget.component != null) {
+      _nameCtrl.text = widget.component!.name;
+      _weightCtrl.text = (widget.component!.weightPercent * 100).toStringAsFixed(0);
+    }
+  }
 
   @override
   void dispose() {
@@ -30,13 +46,27 @@ class _AddComponentModalState extends ConsumerState<AddComponentModal> {
       final weight = double.parse(_weightCtrl.text) / 100;
 
       final db = ref.read(databaseProvider);
-      db.into(db.gradingComponents).insert(
-            GradingComponentsCompanion.insert(
-              name: name,
-              weightPercent: weight,
-              courseId: widget.courseId,
-            ),
-          );
+      
+      if (widget.component != null) {
+        // Update existing component
+        db.update(db.gradingComponents).replace(
+          GradingComponent(
+            id: widget.component!.id,
+            name: name,
+            weightPercent: weight,
+            courseId: widget.courseId,
+          ),
+        );
+      } else {
+        // Insert new component
+        db.into(db.gradingComponents).insert(
+          GradingComponentsCompanion.insert(
+            name: name,
+            weightPercent: weight,
+            courseId: widget.courseId,
+          ),
+        );
+      }
 
       Navigator.pop(context); // Close modal
     }
@@ -59,7 +89,7 @@ class _AddComponentModalState extends ConsumerState<AddComponentModal> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "New Grading Category",
+              widget.component != null ? "Edit Grading Category" : "New Grading Category",
               style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
@@ -105,7 +135,7 @@ class _AddComponentModalState extends ConsumerState<AddComponentModal> {
                   backgroundColor: AppTheme.primaryColor,
                   foregroundColor: Colors.white,
                 ),
-                child: const Text("Create Category"),
+                child: Text(widget.component != null ? "Update Category" : "Create Category"),
               ),
             ),
           ],

@@ -38,6 +38,7 @@ class Assessments extends Table {
   RealColumn get scoreObtained => real()(); // 15.0
   RealColumn get totalItems => real()(); // 20.0
   BoolColumn get isExcused => boolean().withDefault(const Constant(false))();
+  BoolColumn get isGoal => boolean().withDefault(const Constant(false))();
   
   // Foreign Key: Links to a Component
   IntColumn get componentId => integer().references(GradingComponents, #id, onDelete: KeyAction.cascade)();
