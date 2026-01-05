@@ -28,6 +28,9 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
   }
 
   void _nextPage() {
+    // Dismiss keyboard before navigating
+    FocusScope.of(context).unfocus();
+    
     if (_currentPage < 3) {
       _pageController.animateToPage(
         _currentPage + 1,
@@ -40,6 +43,9 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
   }
 
   void _previousPage() {
+    // Dismiss keyboard before navigating
+    FocusScope.of(context).unfocus();
+    
     if (_currentPage > 0) {
       _pageController.animateToPage(
         _currentPage - 1,
@@ -67,6 +73,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
+      resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
           children: [
@@ -207,11 +214,10 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
 
   Widget _buildPersonalizationPage() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(32.0),
+      padding: const EdgeInsets.symmetric(horizontal: 32.0, vertical: 20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const SizedBox(height: 20),
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
@@ -309,7 +315,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
             ),
           ).animate(delay: 400.ms).fadeIn(duration: 400.ms),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 80), // Extra space for keyboard
         ],
       ),
     );
