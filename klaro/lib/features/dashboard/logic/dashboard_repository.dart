@@ -21,7 +21,8 @@ class CourseActions {
     required String name, 
     required String code, 
     required double targetGwa,
-    required double units
+    required double units,
+    required int termId,
   }) async {
     final db = ref.read(databaseProvider);
     
@@ -32,17 +33,16 @@ class CourseActions {
         units: units,
         targetGwa: targetGwa,
         colorHex: '#4ADE80', // Default Green
-        termId: 1, // Hardcoded for MVP
+        termId: termId,
       ),
     );
     
-    // Refresh the courses list
-    ref.invalidate(coursesProvider);
+    // Note: No need to invalidate since we're using a Stream that watches the database
   }
 }
 
-// Overall GWA calculator provider
-final overallGwaProvider = StreamProvider<double>((ref) async* {
+// Overall GWA calculator provider (returns null if no data)
+final overallGwaProvider = StreamProvider<double?>((ref) async* {
   final db = ref.watch(databaseProvider);
   
   // Watch ALL assessments to trigger recalculation when any score changes
@@ -51,6 +51,12 @@ final overallGwaProvider = StreamProvider<double>((ref) async* {
   await for (final _ in assessmentsStream) {
     // Fetch all courses
     final courses = await db.select(db.courses).get();
+    
+    // If there are no courses at all, return null
+    if (courses.isEmpty) {
+      yield null;
+      continue;
+    }
     
     double totalGradePoints = 0;
     double totalUnits = 0;
@@ -82,8 +88,9 @@ final overallGwaProvider = StreamProvider<double>((ref) async* {
       }
     }
 
+    // If no courses have any grades yet, return null
     if (totalUnits == 0) {
-      yield 1.0; // Default / Start fresh
+      yield null;
     } else {
       yield totalGradePoints / totalUnits;
     }

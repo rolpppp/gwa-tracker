@@ -10,17 +10,23 @@ class CourseStanding {
   
   final double projectedPercentage; // Real + Goal items
   final double projectedGrade;      // UP Grade including Goals
+  
+  final double weightGraded;      // Percentage of course weight that has assessments (0.0 to 1.0)
 
   CourseStanding({
     required this.realPercentage,
     required this.realGrade,
     required this.projectedPercentage,
     required this.projectedGrade,
+    required this.weightGraded,
   });
   
   // Backwards compatibility getters
   double get percentage => realPercentage;
   double get finalGrade => realGrade;
+  
+  // Check if there's enough data to show a meaningful grade (at least 30% graded)
+  bool get hasEnoughData => weightGraded >= 0.3;
 }
 
 // Manual StreamProvider.family for course standing
@@ -74,6 +80,7 @@ final courseStandingProvider = StreamProvider.family<CourseStanding, int>((ref, 
       realGrade: GradingSystem.convertToUPGrade(finalRealPct),
       projectedPercentage: finalProjPct,
       projectedGrade: GradingSystem.convertToUPGrade(finalProjPct),
+      weightGraded: realWeightUsed, // Track how much of the course has been graded
     );
   }
 });

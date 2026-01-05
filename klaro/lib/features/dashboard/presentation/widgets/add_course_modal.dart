@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/features/dashboard/logic/dashboard_repository.dart';
+import 'package:klaro/features/dashboard/logic/term_repository.dart';
 import 'package:klaro/core/theme/app_theme.dart';
 
 class AddCourseModal extends ConsumerStatefulWidget {
@@ -25,11 +26,21 @@ class _AddCourseModalState extends ConsumerState<AddCourseModal> {
 
   void _save() {
     if (_codeCtrl.text.isNotEmpty && _nameCtrl.text.isNotEmpty && _unitsCtrl.text.isNotEmpty) {
+      final activeTerm = ref.read(activeTermProvider).value;
+      
+      if (activeTerm == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Please select an active term first")),
+        );
+        return;
+      }
+      
       ref.read(courseActionsProvider).addCourse(
         name: _nameCtrl.text,
         code: _codeCtrl.text,
         targetGwa: double.tryParse(_targetGwaCtrl.text) ?? 1.0,
         units: double.tryParse(_unitsCtrl.text) ?? 3.0,
+        termId: activeTerm.id,
       );
       Navigator.pop(context);
     }

@@ -1,13 +1,15 @@
-// ... Keep imports and providers ...
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/database.dart';
-import 'package:klaro/core/logic/grading_system.dart';
+import 'package:klaro/core/logic/grade_display_helper.dart';
+import 'package:klaro/core/services/preferences_service.dart';
 import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 import 'package:klaro/features/course_management/logic/course_grade_provider.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_component_modal.dart';
 import 'package:klaro/features/course_management/presentation/widgets/add_assessment_modal.dart';
-import 'package:klaro/features/course_management/presentation/widgets/goal_simulator_modal.dart';
+import 'package:klaro/features/course_management/presentation/widgets/edit_course_modal.dart';
+import 'package:klaro/features/course_management/presentation/widgets/component_simulator_modal.dart';
+import 'package:klaro/features/course_management/presentation/syllabus_upload_screen.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 // Providers for components and assessments
@@ -38,6 +40,51 @@ class CourseDetailScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         foregroundColor: Colors.black,
+        actions: [
+          PopupMenuButton<String>(
+            icon: Icon(PhosphorIcons.dotsThreeVertical()),
+            itemBuilder: (context) => [
+              PopupMenuItem(
+                value: 'edit',
+                child: Row(
+                  children: [
+                    Icon(PhosphorIcons.pencil(), size: 18),
+                    const SizedBox(width: 8),
+                    const Text("Edit Course"),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    Icon(PhosphorIcons.trash(), size: 18, color: Colors.red),
+                    const SizedBox(width: 8),
+                    const Text("Delete Course", style: TextStyle(color: Colors.red)),
+                  ],
+                ),
+              ),
+            ],
+            onSelected: (value) async {
+              if (value == 'edit') {
+                final result = await showModalBottomSheet(
+                  context: context,
+                  isScrollControlled: true,
+                  shape: const RoundedRectangleBorder(
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                  ),
+                  builder: (ctx) => EditCourseModal(course: course),
+                );
+                // If edit was successful, we might want to refresh
+                if (result == true && context.mounted) {
+                  // The providers will auto-refresh via StreamProvider
+                }
+              } else if (value == 'delete') {
+                _showDeleteConfirmation(context, ref);
+              }
+            },
+          ),
+        ],
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24),
@@ -50,9 +97,14 @@ class CourseDetailScreen extends ConsumerWidget {
             
             // 3. The List
             componentsAsync.when(
-              data: (components) => Column(
-                children: components.map((comp) => _GradingComponentTile(component: comp)).toList(),
-              ),
+              data: (components) {
+                if (components.isEmpty) {
+                  return _buildEmptyState(context, ref);
+                }
+                return Column(
+                  children: components.map((comp) => _GradingComponentTile(component: comp)).toList(),
+                );
+              },
               loading: () => const SizedBox(),
               error: (_, __) => const SizedBox(),
             ),
@@ -75,6 +127,76 @@ class CourseDetailScreen extends ConsumerWidget {
       ),
     );
   }
+
+  void _showDeleteConfirmation(BuildContext context, WidgetRef ref) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Delete Course?"),
+        content: Text(
+          "This will permanently delete '${course.code}' and ALL grading components and assessments. This cannot be undone.",
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final db = ref.read(databaseProvider);
+              await (db.delete(db.courses)..where((c) => c.id.equals(course.id))).go();
+              if (context.mounted) {
+                Navigator.pop(ctx); // Close dialog
+                Navigator.pop(context); // Go back to dashboard
+              }
+            },
+            style: FilledButton.styleFrom(backgroundColor: Colors.red),
+            child: const Text("Delete"),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmptyState(BuildContext context, WidgetRef ref) {
+    return Center(
+      child: Column(
+        children: [
+          const SizedBox(height: 40),
+          Icon(PhosphorIcons.bookOpen(), size: 48, color: Colors.grey[300]),
+          const SizedBox(height: 16),
+          const Text("No grading components yet."),
+          const SizedBox(height: 16),
+          
+          // AI UPLOAD BUTTON
+          OutlinedButton.icon(
+            onPressed: () {
+              Navigator.push(
+                context, 
+                MaterialPageRoute(builder: (_) => SyllabusUploadScreen(courseId: course.id))
+              );
+            },
+            icon: const Icon(Icons.auto_awesome), // Sparkles icon
+            label: const Text("Import via AI Syllabus"),
+          ),
+          
+          TextButton(
+            onPressed: () => _showAddComponentModal(context, ref), // The manual way
+            child: const Text("Create Manually"),
+          )
+        ],
+      ),
+    );
+  }
+
+  void _showAddComponentModal(BuildContext context, WidgetRef ref) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(24))),
+      builder: (ctx) => AddComponentModal(courseId: course.id),
+    );
+  }
 }
 
 class _CourseHeader extends ConsumerWidget {
@@ -88,6 +210,9 @@ class _CourseHeader extends ConsumerWidget {
     
     // WATCH COMPONENTS to calculate total weight used
     final componentsAsync = ref.watch(courseComponentsProvider(course.id));
+    
+    // Get selected grading system
+    final selectedSystem = ref.watch(preferencesProvider).selectedGradingSystem;
 
     return Container(
       width: double.infinity,
@@ -109,8 +234,52 @@ class _CourseHeader extends ConsumerWidget {
               // THE LIVE DATA - Shows Real vs Projected
               gradeAsync.when(
                 data: (standing) {
+                  // If not enough data, show incomplete status
+                  if (!standing.hasEnoughData) {
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        const Text(
+                          "Current Grade",
+                          style: TextStyle(color: Colors.grey, fontSize: 12),
+                        ),
+                        const SizedBox(height: 4),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: Colors.grey[200],
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Column(
+                            children: [
+                              Text(
+                                "--",
+                                style: TextStyle(
+                                  fontSize: 24,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                              Text(
+                                "${(standing.weightGraded * 100).toStringAsFixed(0)}% graded",
+                                style: TextStyle(
+                                  fontSize: 10,
+                                  color: Colors.grey[600],
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    );
+                  }
+                  
                   // Check if we have goals active (Real != Projected)
                   bool hasGoals = standing.realPercentage != standing.projectedPercentage;
+                  
+                  // Convert grades to selected system
+                  final projectedGrade = GradeDisplayHelper.formatGrade(standing.projectedPercentage, selectedSystem);
+                  final realGrade = GradeDisplayHelper.formatGrade(standing.realPercentage, selectedSystem);
 
                   return Column(
                     crossAxisAlignment: CrossAxisAlignment.end,
@@ -144,12 +313,12 @@ class _CourseHeader extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      "Projected: ${standing.projectedPercentage.toStringAsFixed(1)}%",
+                                      "Projected: ${standing.projectedPercentage.toStringAsFixed(1)}% ($projectedGrade)",
                                       style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.purpleAccent),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
-                                      "Real: ${standing.realPercentage.toStringAsFixed(1)}%",
+                                      "Real: ${standing.realPercentage.toStringAsFixed(1)}% ($realGrade)",
                                       style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
                                     ),
                                   ],
@@ -177,7 +346,7 @@ class _CourseHeader extends ConsumerWidget {
                                   crossAxisAlignment: CrossAxisAlignment.end,
                                   children: [
                                     Text(
-                                      standing.projectedGrade.toStringAsFixed(2),
+                                      projectedGrade,
                                       style: const TextStyle(
                                         fontSize: 28, 
                                         fontWeight: FontWeight.bold, 
@@ -185,7 +354,7 @@ class _CourseHeader extends ConsumerWidget {
                                       ),
                                     ),
                                     Text(
-                                      "Real: ${standing.realGrade.toStringAsFixed(2)}",
+                                      "Real: $realGrade",
                                       style: TextStyle(
                                         fontSize: 11, 
                                         color: Colors.grey.shade600,
@@ -210,7 +379,7 @@ class _CourseHeader extends ConsumerWidget {
                               builder: (ctx) => AlertDialog(
                                 title: const Text("Grade Details"),
                                 content: Text(
-                                  "Percentage: ${standing.realPercentage.toStringAsFixed(1)}%",
+                                  "Percentage: ${standing.realPercentage.toStringAsFixed(1)}%\nGrade: $realGrade",
                                   style: const TextStyle(fontSize: 16),
                                 ),
                                 actions: [
@@ -226,11 +395,11 @@ class _CourseHeader extends ConsumerWidget {
                             mainAxisSize: MainAxisSize.min,
                             children: [
                               Text(
-                                standing.realGrade.toStringAsFixed(2),
+                                realGrade,
                                 style: TextStyle(
                                   fontSize: 28, 
                                   fontWeight: FontWeight.bold, 
-                                  color: Color(GradingSystem.getGradeColor(standing.realGrade)),
+                                  color: Color(GradeDisplayHelper.getGradeColorForSystem(standing.realPercentage, selectedSystem)),
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -251,17 +420,59 @@ class _CourseHeader extends ConsumerWidget {
               ),
             ],
           ),
+          
+          // Grading Progress Indicator
+          gradeAsync.when(
+            data: (standing) {
+              if (standing.weightGraded > 0 && standing.weightGraded < 1.0) {
+                return Column(
+                  children: [
+                    const SizedBox(height: 16),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: standing.hasEnoughData ? Colors.blue[50] : Colors.orange[50],
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: standing.hasEnoughData ? Colors.blue[200]! : Colors.orange[200]!,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            standing.hasEnoughData ? Icons.info_outline : Icons.warning_amber_rounded,
+                            size: 18,
+                            color: standing.hasEnoughData ? Colors.blue[700] : Colors.orange[700],
+                          ),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              standing.hasEnoughData
+                                  ? "${(standing.weightGraded * 100).toStringAsFixed(0)}% of course graded"
+                                  : "Only ${(standing.weightGraded * 100).toStringAsFixed(0)}% graded - add more assessments for accurate grade",
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: standing.hasEnoughData ? Colors.blue[800] : Colors.orange[800],
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                );
+              }
+              return const SizedBox.shrink();
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
           const SizedBox(height: 16),
           
           // Goal Simulator Button
           componentsAsync.when(
             data: (components) {
-              // Calculate total weight used
-              double totalWeightUsed = 0.0;
-              for (var c in components) {
-                totalWeightUsed += c.weightPercent;
-              }
-              
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
@@ -281,12 +492,14 @@ class _CourseHeader extends ConsumerWidget {
                         showModalBottomSheet(
                           context: context,
                           isScrollControlled: true,
+                          backgroundColor: Colors.transparent,
                           shape: const RoundedRectangleBorder(
                             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
                           ),
-                          builder: (ctx) => GoalSimulatorModal(
-                            currentStanding: standingValue,
-                            totalWeightUsed: totalWeightUsed,
+                          builder: (ctx) => ComponentSimulatorModal(
+                            courseId: course.id,
+                            currentGrade: standingValue.realGrade,
+                            currentPercentage: standingValue.realPercentage,
                           ),
                         );
                       }
