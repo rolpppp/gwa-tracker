@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/database.dart';
-import 'package:klaro/core/theme/app_theme.dart'; // To access colors
+
 
 class AddComponentModal extends ConsumerStatefulWidget {
   final int courseId;

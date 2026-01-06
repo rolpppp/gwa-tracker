@@ -17,7 +17,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _institutionController = TextEditingController();
   int _currentPage = 0;
-  String _selectedSystem = 'UP';
+  String _selectedSystem = '5Point';
 
   @override
   void dispose() {
@@ -514,7 +514,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                     title: "5-Point Scale",
                     subtitle: "1.0 (Excellent) to 5.0 (Fail)",
                     example: "92% = 1.25",
-                    value: "UP",
+                    value: "5Point",
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
@@ -523,10 +523,10 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                   
                   _GradingSystemCard(
                     icon: "🎓",
-                    title: "4-Point GPA",
+                    title: "4-Point Scale",
                     subtitle: "4.0 (Excellent) to 0.0 (Fail)",
                     example: "92% = 3.0 (Very Good)",
-                    value: "4POINT",
+                    value: "4Point",
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),

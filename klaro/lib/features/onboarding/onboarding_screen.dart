@@ -12,7 +12,7 @@ class OnboardingScreen extends ConsumerStatefulWidget {
 }
 
 class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
-  String _selectedSystem = 'UP'; // Default
+  String _selectedSystem = '5Point'; // Default
 
   void _finish() async {
     // Save preference
@@ -68,9 +68,9 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
               const SizedBox(height: 16),
               
               _SystemCard(
-                title: "UP System",
+                title: "5-Point Scale",
                 subtitle: "1.0 (Excellent) to 5.0 (Fail)",
-                value: "UP",
+                value: "5Point",
                 groupValue: _selectedSystem,
                 onChanged: (v) => setState(() => _selectedSystem = v),
               ),

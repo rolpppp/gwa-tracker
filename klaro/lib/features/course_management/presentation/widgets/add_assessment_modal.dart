@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:drift/drift.dart' hide Column;
 import 'package:klaro/core/services/database.dart';
-import 'package:klaro/core/theme/app_theme.dart';
+// import 'package:klaro/core/theme/app_theme.dart'; // Unused
 
 class AddAssessmentModal extends ConsumerStatefulWidget {
   final int componentId;

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/features/dashboard/logic/dashboard_repository.dart';
 import 'package:klaro/features/dashboard/logic/term_repository.dart';
-import 'package:klaro/core/theme/app_theme.dart';
 
 class AddCourseModal extends ConsumerStatefulWidget {
   const AddCourseModal({super.key});

@@ -43,3 +43,19 @@ class Assessments extends Table {
   // Foreign Key: Links to a Component
   IntColumn get componentId => integer().references(GradingComponents, #id, onDelete: KeyAction.cascade)();
 }
+
+// Table 5: Custom Grading Systems
+class CustomGradingSystems extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  TextColumn get name => text().unique()(); // "Custom System 1"
+  BoolColumn get isHigherBetter => boolean().withDefault(const Constant(false))(); // false for UP-like (lower is better), true for GPA-like (higher is better)
+}
+
+// Table 6: Custom Grading Scales (Conversion rules)
+class CustomGradingScales extends Table {
+  IntColumn get id => integer().autoIncrement()();
+  IntColumn get systemId => integer().references(CustomGradingSystems, #id, onDelete: KeyAction.cascade)();
+  RealColumn get minPercentage => real()(); // 96.0
+  RealColumn get gradeValue => real()(); // 1.00 or 4.0
+  TextColumn get gradeLabel => text().nullable()(); // "A", "1.00", etc.
+}

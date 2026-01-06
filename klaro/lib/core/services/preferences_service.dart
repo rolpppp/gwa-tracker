@@ -12,7 +12,7 @@ final onboardingCompleteNotifier = ValueNotifier<bool>(false);
 // Global ValueNotifier for theme mode ('system', 'light', 'dark')
 final themeModeNotifier = ValueNotifier<String>('system');
 // Global ValueNotifier for grading system
-final gradingSystemNotifier = ValueNotifier<String>('UP');
+final gradingSystemNotifier = ValueNotifier<String>('5Point');
 
 // Bridge provider to make grading system reactive in Riverpod
 final activeGradingSystemProvider = NotifierProvider<ActiveGradingSystemNotifier, String>(ActiveGradingSystemNotifier.new);
@@ -42,16 +42,18 @@ class PreferencesService {
   }
 
   static const _keyOnboardingComplete = 'onboarding_complete';
-  static const _keyGradingSystem = 'grading_system'; // 'UP', 'US', 'Letter'
+  static const _keyGradingSystem = 'grading_system'; // '5Point', '4Point', 'US'
   static const _keyUserName = 'user_name';
   static const _keyInstitution = 'user_institution';
   static const _keyThemeMode = 'theme_mode';
+  static const _keyHiddenGradingSystems = 'hidden_grading_systems';
 
   bool get isOnboardingComplete => _prefs.getBool(_keyOnboardingComplete) ?? false;
-  String get selectedGradingSystem => _prefs.getString(_keyGradingSystem) ?? 'UP';
+  String get selectedGradingSystem => _prefs.getString(_keyGradingSystem) ?? '5Point';
   String get userName => _prefs.getString(_keyUserName) ?? '';
   String get institution => _prefs.getString(_keyInstitution) ?? '';
   String get themeMode => _prefs.getString(_keyThemeMode) ?? 'system';
+  List<String> get hiddenGradingSystems => _prefs.getStringList(_keyHiddenGradingSystems) ?? [];
   
   // Legacy getter for compatibility
   String get gradingSystem => selectedGradingSystem;
@@ -89,5 +91,19 @@ class PreferencesService {
   
   Future<void> resetOnboarding() async {
     await _prefs.setBool(_keyOnboardingComplete, false);
+  }
+  
+  Future<void> setHiddenGradingSystems(List<String> hiddenSystems) async {
+    await _prefs.setStringList(_keyHiddenGradingSystems, hiddenSystems);
+  }
+  
+  Future<void> toggleGradingSystemVisibility(String system) async {
+    final hidden = hiddenGradingSystems;
+    if (hidden.contains(system)) {
+      hidden.remove(system);
+    } else {
+      hidden.add(system);
+    }
+    await setHiddenGradingSystems(hidden);
   }
 }

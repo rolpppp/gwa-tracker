@@ -11,12 +11,12 @@ import 'package:klaro/features/course_management/data/database_tables.dart';
 // Required for generation
 part 'database.g.dart';
 
-@DriftDatabase(tables: [Terms, Courses, GradingComponents, Assessments])
+@DriftDatabase(tables: [Terms, Courses, GradingComponents, Assessments, CustomGradingSystems, CustomGradingScales])
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 2;
+  int get schemaVersion => 3;
 
   @override
   MigrationStrategy get migration {
@@ -28,6 +28,11 @@ class AppDatabase extends _$AppDatabase {
         if (from < 2) {
           // Add isGoal column to assessments table
           await m.addColumn(assessments, assessments.isGoal as GeneratedColumn);
+        }
+        if (from < 3) {
+          // Add custom grading systems tables
+          await m.createTable(customGradingSystems);
+          await m.createTable(customGradingScales);
         }
       },
     );

@@ -1462,6 +1462,631 @@ class AssessmentsCompanion extends UpdateCompanion<Assessment> {
   }
 }
 
+class $CustomGradingSystemsTable extends CustomGradingSystems
+    with TableInfo<$CustomGradingSystemsTable, CustomGradingSystem> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomGradingSystemsTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _nameMeta = const VerificationMeta('name');
+  @override
+  late final GeneratedColumn<String> name = GeneratedColumn<String>(
+    'name',
+    aliasedName,
+    false,
+    type: DriftSqlType.string,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'),
+  );
+  static const VerificationMeta _isHigherBetterMeta = const VerificationMeta(
+    'isHigherBetter',
+  );
+  @override
+  late final GeneratedColumn<bool> isHigherBetter = GeneratedColumn<bool>(
+    'is_higher_better',
+    aliasedName,
+    false,
+    type: DriftSqlType.bool,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'CHECK ("is_higher_better" IN (0, 1))',
+    ),
+    defaultValue: const Constant(false),
+  );
+  @override
+  List<GeneratedColumn> get $columns => [id, name, isHigherBetter];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'custom_grading_systems';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CustomGradingSystem> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('name')) {
+      context.handle(
+        _nameMeta,
+        name.isAcceptableOrUnknown(data['name']!, _nameMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_nameMeta);
+    }
+    if (data.containsKey('is_higher_better')) {
+      context.handle(
+        _isHigherBetterMeta,
+        isHigherBetter.isAcceptableOrUnknown(
+          data['is_higher_better']!,
+          _isHigherBetterMeta,
+        ),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CustomGradingSystem map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CustomGradingSystem(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      name: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}name'],
+      )!,
+      isHigherBetter: attachedDatabase.typeMapping.read(
+        DriftSqlType.bool,
+        data['${effectivePrefix}is_higher_better'],
+      )!,
+    );
+  }
+
+  @override
+  $CustomGradingSystemsTable createAlias(String alias) {
+    return $CustomGradingSystemsTable(attachedDatabase, alias);
+  }
+}
+
+class CustomGradingSystem extends DataClass
+    implements Insertable<CustomGradingSystem> {
+  final int id;
+  final String name;
+  final bool isHigherBetter;
+  const CustomGradingSystem({
+    required this.id,
+    required this.name,
+    required this.isHigherBetter,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['name'] = Variable<String>(name);
+    map['is_higher_better'] = Variable<bool>(isHigherBetter);
+    return map;
+  }
+
+  CustomGradingSystemsCompanion toCompanion(bool nullToAbsent) {
+    return CustomGradingSystemsCompanion(
+      id: Value(id),
+      name: Value(name),
+      isHigherBetter: Value(isHigherBetter),
+    );
+  }
+
+  factory CustomGradingSystem.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CustomGradingSystem(
+      id: serializer.fromJson<int>(json['id']),
+      name: serializer.fromJson<String>(json['name']),
+      isHigherBetter: serializer.fromJson<bool>(json['isHigherBetter']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'name': serializer.toJson<String>(name),
+      'isHigherBetter': serializer.toJson<bool>(isHigherBetter),
+    };
+  }
+
+  CustomGradingSystem copyWith({int? id, String? name, bool? isHigherBetter}) =>
+      CustomGradingSystem(
+        id: id ?? this.id,
+        name: name ?? this.name,
+        isHigherBetter: isHigherBetter ?? this.isHigherBetter,
+      );
+  CustomGradingSystem copyWithCompanion(CustomGradingSystemsCompanion data) {
+    return CustomGradingSystem(
+      id: data.id.present ? data.id.value : this.id,
+      name: data.name.present ? data.name.value : this.name,
+      isHigherBetter: data.isHigherBetter.present
+          ? data.isHigherBetter.value
+          : this.isHigherBetter,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomGradingSystem(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('isHigherBetter: $isHigherBetter')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode => Object.hash(id, name, isHigherBetter);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CustomGradingSystem &&
+          other.id == this.id &&
+          other.name == this.name &&
+          other.isHigherBetter == this.isHigherBetter);
+}
+
+class CustomGradingSystemsCompanion
+    extends UpdateCompanion<CustomGradingSystem> {
+  final Value<int> id;
+  final Value<String> name;
+  final Value<bool> isHigherBetter;
+  const CustomGradingSystemsCompanion({
+    this.id = const Value.absent(),
+    this.name = const Value.absent(),
+    this.isHigherBetter = const Value.absent(),
+  });
+  CustomGradingSystemsCompanion.insert({
+    this.id = const Value.absent(),
+    required String name,
+    this.isHigherBetter = const Value.absent(),
+  }) : name = Value(name);
+  static Insertable<CustomGradingSystem> custom({
+    Expression<int>? id,
+    Expression<String>? name,
+    Expression<bool>? isHigherBetter,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (name != null) 'name': name,
+      if (isHigherBetter != null) 'is_higher_better': isHigherBetter,
+    });
+  }
+
+  CustomGradingSystemsCompanion copyWith({
+    Value<int>? id,
+    Value<String>? name,
+    Value<bool>? isHigherBetter,
+  }) {
+    return CustomGradingSystemsCompanion(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      isHigherBetter: isHigherBetter ?? this.isHigherBetter,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (name.present) {
+      map['name'] = Variable<String>(name.value);
+    }
+    if (isHigherBetter.present) {
+      map['is_higher_better'] = Variable<bool>(isHigherBetter.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomGradingSystemsCompanion(')
+          ..write('id: $id, ')
+          ..write('name: $name, ')
+          ..write('isHigherBetter: $isHigherBetter')
+          ..write(')'))
+        .toString();
+  }
+}
+
+class $CustomGradingScalesTable extends CustomGradingScales
+    with TableInfo<$CustomGradingScalesTable, CustomGradingScale> {
+  @override
+  final GeneratedDatabase attachedDatabase;
+  final String? _alias;
+  $CustomGradingScalesTable(this.attachedDatabase, [this._alias]);
+  static const VerificationMeta _idMeta = const VerificationMeta('id');
+  @override
+  late final GeneratedColumn<int> id = GeneratedColumn<int>(
+    'id',
+    aliasedName,
+    false,
+    hasAutoIncrement: true,
+    type: DriftSqlType.int,
+    requiredDuringInsert: false,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'PRIMARY KEY AUTOINCREMENT',
+    ),
+  );
+  static const VerificationMeta _systemIdMeta = const VerificationMeta(
+    'systemId',
+  );
+  @override
+  late final GeneratedColumn<int> systemId = GeneratedColumn<int>(
+    'system_id',
+    aliasedName,
+    false,
+    type: DriftSqlType.int,
+    requiredDuringInsert: true,
+    defaultConstraints: GeneratedColumn.constraintIsAlways(
+      'REFERENCES custom_grading_systems (id) ON DELETE CASCADE',
+    ),
+  );
+  static const VerificationMeta _minPercentageMeta = const VerificationMeta(
+    'minPercentage',
+  );
+  @override
+  late final GeneratedColumn<double> minPercentage = GeneratedColumn<double>(
+    'min_percentage',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _gradeValueMeta = const VerificationMeta(
+    'gradeValue',
+  );
+  @override
+  late final GeneratedColumn<double> gradeValue = GeneratedColumn<double>(
+    'grade_value',
+    aliasedName,
+    false,
+    type: DriftSqlType.double,
+    requiredDuringInsert: true,
+  );
+  static const VerificationMeta _gradeLabelMeta = const VerificationMeta(
+    'gradeLabel',
+  );
+  @override
+  late final GeneratedColumn<String> gradeLabel = GeneratedColumn<String>(
+    'grade_label',
+    aliasedName,
+    true,
+    type: DriftSqlType.string,
+    requiredDuringInsert: false,
+  );
+  @override
+  List<GeneratedColumn> get $columns => [
+    id,
+    systemId,
+    minPercentage,
+    gradeValue,
+    gradeLabel,
+  ];
+  @override
+  String get aliasedName => _alias ?? actualTableName;
+  @override
+  String get actualTableName => $name;
+  static const String $name = 'custom_grading_scales';
+  @override
+  VerificationContext validateIntegrity(
+    Insertable<CustomGradingScale> instance, {
+    bool isInserting = false,
+  }) {
+    final context = VerificationContext();
+    final data = instance.toColumns(true);
+    if (data.containsKey('id')) {
+      context.handle(_idMeta, id.isAcceptableOrUnknown(data['id']!, _idMeta));
+    }
+    if (data.containsKey('system_id')) {
+      context.handle(
+        _systemIdMeta,
+        systemId.isAcceptableOrUnknown(data['system_id']!, _systemIdMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_systemIdMeta);
+    }
+    if (data.containsKey('min_percentage')) {
+      context.handle(
+        _minPercentageMeta,
+        minPercentage.isAcceptableOrUnknown(
+          data['min_percentage']!,
+          _minPercentageMeta,
+        ),
+      );
+    } else if (isInserting) {
+      context.missing(_minPercentageMeta);
+    }
+    if (data.containsKey('grade_value')) {
+      context.handle(
+        _gradeValueMeta,
+        gradeValue.isAcceptableOrUnknown(data['grade_value']!, _gradeValueMeta),
+      );
+    } else if (isInserting) {
+      context.missing(_gradeValueMeta);
+    }
+    if (data.containsKey('grade_label')) {
+      context.handle(
+        _gradeLabelMeta,
+        gradeLabel.isAcceptableOrUnknown(data['grade_label']!, _gradeLabelMeta),
+      );
+    }
+    return context;
+  }
+
+  @override
+  Set<GeneratedColumn> get $primaryKey => {id};
+  @override
+  CustomGradingScale map(Map<String, dynamic> data, {String? tablePrefix}) {
+    final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
+    return CustomGradingScale(
+      id: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}id'],
+      )!,
+      systemId: attachedDatabase.typeMapping.read(
+        DriftSqlType.int,
+        data['${effectivePrefix}system_id'],
+      )!,
+      minPercentage: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}min_percentage'],
+      )!,
+      gradeValue: attachedDatabase.typeMapping.read(
+        DriftSqlType.double,
+        data['${effectivePrefix}grade_value'],
+      )!,
+      gradeLabel: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}grade_label'],
+      ),
+    );
+  }
+
+  @override
+  $CustomGradingScalesTable createAlias(String alias) {
+    return $CustomGradingScalesTable(attachedDatabase, alias);
+  }
+}
+
+class CustomGradingScale extends DataClass
+    implements Insertable<CustomGradingScale> {
+  final int id;
+  final int systemId;
+  final double minPercentage;
+  final double gradeValue;
+  final String? gradeLabel;
+  const CustomGradingScale({
+    required this.id,
+    required this.systemId,
+    required this.minPercentage,
+    required this.gradeValue,
+    this.gradeLabel,
+  });
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    map['id'] = Variable<int>(id);
+    map['system_id'] = Variable<int>(systemId);
+    map['min_percentage'] = Variable<double>(minPercentage);
+    map['grade_value'] = Variable<double>(gradeValue);
+    if (!nullToAbsent || gradeLabel != null) {
+      map['grade_label'] = Variable<String>(gradeLabel);
+    }
+    return map;
+  }
+
+  CustomGradingScalesCompanion toCompanion(bool nullToAbsent) {
+    return CustomGradingScalesCompanion(
+      id: Value(id),
+      systemId: Value(systemId),
+      minPercentage: Value(minPercentage),
+      gradeValue: Value(gradeValue),
+      gradeLabel: gradeLabel == null && nullToAbsent
+          ? const Value.absent()
+          : Value(gradeLabel),
+    );
+  }
+
+  factory CustomGradingScale.fromJson(
+    Map<String, dynamic> json, {
+    ValueSerializer? serializer,
+  }) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return CustomGradingScale(
+      id: serializer.fromJson<int>(json['id']),
+      systemId: serializer.fromJson<int>(json['systemId']),
+      minPercentage: serializer.fromJson<double>(json['minPercentage']),
+      gradeValue: serializer.fromJson<double>(json['gradeValue']),
+      gradeLabel: serializer.fromJson<String?>(json['gradeLabel']),
+    );
+  }
+  @override
+  Map<String, dynamic> toJson({ValueSerializer? serializer}) {
+    serializer ??= driftRuntimeOptions.defaultSerializer;
+    return <String, dynamic>{
+      'id': serializer.toJson<int>(id),
+      'systemId': serializer.toJson<int>(systemId),
+      'minPercentage': serializer.toJson<double>(minPercentage),
+      'gradeValue': serializer.toJson<double>(gradeValue),
+      'gradeLabel': serializer.toJson<String?>(gradeLabel),
+    };
+  }
+
+  CustomGradingScale copyWith({
+    int? id,
+    int? systemId,
+    double? minPercentage,
+    double? gradeValue,
+    Value<String?> gradeLabel = const Value.absent(),
+  }) => CustomGradingScale(
+    id: id ?? this.id,
+    systemId: systemId ?? this.systemId,
+    minPercentage: minPercentage ?? this.minPercentage,
+    gradeValue: gradeValue ?? this.gradeValue,
+    gradeLabel: gradeLabel.present ? gradeLabel.value : this.gradeLabel,
+  );
+  CustomGradingScale copyWithCompanion(CustomGradingScalesCompanion data) {
+    return CustomGradingScale(
+      id: data.id.present ? data.id.value : this.id,
+      systemId: data.systemId.present ? data.systemId.value : this.systemId,
+      minPercentage: data.minPercentage.present
+          ? data.minPercentage.value
+          : this.minPercentage,
+      gradeValue: data.gradeValue.present
+          ? data.gradeValue.value
+          : this.gradeValue,
+      gradeLabel: data.gradeLabel.present
+          ? data.gradeLabel.value
+          : this.gradeLabel,
+    );
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomGradingScale(')
+          ..write('id: $id, ')
+          ..write('systemId: $systemId, ')
+          ..write('minPercentage: $minPercentage, ')
+          ..write('gradeValue: $gradeValue, ')
+          ..write('gradeLabel: $gradeLabel')
+          ..write(')'))
+        .toString();
+  }
+
+  @override
+  int get hashCode =>
+      Object.hash(id, systemId, minPercentage, gradeValue, gradeLabel);
+  @override
+  bool operator ==(Object other) =>
+      identical(this, other) ||
+      (other is CustomGradingScale &&
+          other.id == this.id &&
+          other.systemId == this.systemId &&
+          other.minPercentage == this.minPercentage &&
+          other.gradeValue == this.gradeValue &&
+          other.gradeLabel == this.gradeLabel);
+}
+
+class CustomGradingScalesCompanion extends UpdateCompanion<CustomGradingScale> {
+  final Value<int> id;
+  final Value<int> systemId;
+  final Value<double> minPercentage;
+  final Value<double> gradeValue;
+  final Value<String?> gradeLabel;
+  const CustomGradingScalesCompanion({
+    this.id = const Value.absent(),
+    this.systemId = const Value.absent(),
+    this.minPercentage = const Value.absent(),
+    this.gradeValue = const Value.absent(),
+    this.gradeLabel = const Value.absent(),
+  });
+  CustomGradingScalesCompanion.insert({
+    this.id = const Value.absent(),
+    required int systemId,
+    required double minPercentage,
+    required double gradeValue,
+    this.gradeLabel = const Value.absent(),
+  }) : systemId = Value(systemId),
+       minPercentage = Value(minPercentage),
+       gradeValue = Value(gradeValue);
+  static Insertable<CustomGradingScale> custom({
+    Expression<int>? id,
+    Expression<int>? systemId,
+    Expression<double>? minPercentage,
+    Expression<double>? gradeValue,
+    Expression<String>? gradeLabel,
+  }) {
+    return RawValuesInsertable({
+      if (id != null) 'id': id,
+      if (systemId != null) 'system_id': systemId,
+      if (minPercentage != null) 'min_percentage': minPercentage,
+      if (gradeValue != null) 'grade_value': gradeValue,
+      if (gradeLabel != null) 'grade_label': gradeLabel,
+    });
+  }
+
+  CustomGradingScalesCompanion copyWith({
+    Value<int>? id,
+    Value<int>? systemId,
+    Value<double>? minPercentage,
+    Value<double>? gradeValue,
+    Value<String?>? gradeLabel,
+  }) {
+    return CustomGradingScalesCompanion(
+      id: id ?? this.id,
+      systemId: systemId ?? this.systemId,
+      minPercentage: minPercentage ?? this.minPercentage,
+      gradeValue: gradeValue ?? this.gradeValue,
+      gradeLabel: gradeLabel ?? this.gradeLabel,
+    );
+  }
+
+  @override
+  Map<String, Expression> toColumns(bool nullToAbsent) {
+    final map = <String, Expression>{};
+    if (id.present) {
+      map['id'] = Variable<int>(id.value);
+    }
+    if (systemId.present) {
+      map['system_id'] = Variable<int>(systemId.value);
+    }
+    if (minPercentage.present) {
+      map['min_percentage'] = Variable<double>(minPercentage.value);
+    }
+    if (gradeValue.present) {
+      map['grade_value'] = Variable<double>(gradeValue.value);
+    }
+    if (gradeLabel.present) {
+      map['grade_label'] = Variable<String>(gradeLabel.value);
+    }
+    return map;
+  }
+
+  @override
+  String toString() {
+    return (StringBuffer('CustomGradingScalesCompanion(')
+          ..write('id: $id, ')
+          ..write('systemId: $systemId, ')
+          ..write('minPercentage: $minPercentage, ')
+          ..write('gradeValue: $gradeValue, ')
+          ..write('gradeLabel: $gradeLabel')
+          ..write(')'))
+        .toString();
+  }
+}
+
 abstract class _$AppDatabase extends GeneratedDatabase {
   _$AppDatabase(QueryExecutor e) : super(e);
   $AppDatabaseManager get managers => $AppDatabaseManager(this);
@@ -1470,6 +2095,10 @@ abstract class _$AppDatabase extends GeneratedDatabase {
   late final $GradingComponentsTable gradingComponents =
       $GradingComponentsTable(this);
   late final $AssessmentsTable assessments = $AssessmentsTable(this);
+  late final $CustomGradingSystemsTable customGradingSystems =
+      $CustomGradingSystemsTable(this);
+  late final $CustomGradingScalesTable customGradingScales =
+      $CustomGradingScalesTable(this);
   @override
   Iterable<TableInfo<Table, Object?>> get allTables =>
       allSchemaEntities.whereType<TableInfo<Table, Object?>>();
@@ -1479,6 +2108,8 @@ abstract class _$AppDatabase extends GeneratedDatabase {
     courses,
     gradingComponents,
     assessments,
+    customGradingSystems,
+    customGradingScales,
   ];
   @override
   StreamQueryUpdateRules get streamUpdateRules => const StreamQueryUpdateRules([
@@ -1495,6 +2126,13 @@ abstract class _$AppDatabase extends GeneratedDatabase {
         limitUpdateKind: UpdateKind.delete,
       ),
       result: [TableUpdate('assessments', kind: UpdateKind.delete)],
+    ),
+    WritePropagation(
+      on: TableUpdateQuery.onTableName(
+        'custom_grading_systems',
+        limitUpdateKind: UpdateKind.delete,
+      ),
+      result: [TableUpdate('custom_grading_scales', kind: UpdateKind.delete)],
     ),
   ]);
 }
@@ -2954,6 +3592,637 @@ typedef $$AssessmentsTableProcessedTableManager =
       Assessment,
       PrefetchHooks Function({bool componentId})
     >;
+typedef $$CustomGradingSystemsTableCreateCompanionBuilder =
+    CustomGradingSystemsCompanion Function({
+      Value<int> id,
+      required String name,
+      Value<bool> isHigherBetter,
+    });
+typedef $$CustomGradingSystemsTableUpdateCompanionBuilder =
+    CustomGradingSystemsCompanion Function({
+      Value<int> id,
+      Value<String> name,
+      Value<bool> isHigherBetter,
+    });
+
+final class $$CustomGradingSystemsTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $CustomGradingSystemsTable,
+          CustomGradingSystem
+        > {
+  $$CustomGradingSystemsTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static MultiTypedResultKey<
+    $CustomGradingScalesTable,
+    List<CustomGradingScale>
+  >
+  _customGradingScalesRefsTable(_$AppDatabase db) =>
+      MultiTypedResultKey.fromTable(
+        db.customGradingScales,
+        aliasName: $_aliasNameGenerator(
+          db.customGradingSystems.id,
+          db.customGradingScales.systemId,
+        ),
+      );
+
+  $$CustomGradingScalesTableProcessedTableManager get customGradingScalesRefs {
+    final manager = $$CustomGradingScalesTableTableManager(
+      $_db,
+      $_db.customGradingScales,
+    ).filter((f) => f.systemId.id.sqlEquals($_itemColumn<int>('id')!));
+
+    final cache = $_typedResult.readTableOrNull(
+      _customGradingScalesRefsTable($_db),
+    );
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: cache),
+    );
+  }
+}
+
+class $$CustomGradingSystemsTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomGradingSystemsTable> {
+  $$CustomGradingSystemsTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<bool> get isHigherBetter => $composableBuilder(
+    column: $table.isHigherBetter,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  Expression<bool> customGradingScalesRefs(
+    Expression<bool> Function($$CustomGradingScalesTableFilterComposer f) f,
+  ) {
+    final $$CustomGradingScalesTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.id,
+      referencedTable: $db.customGradingScales,
+      getReferencedColumn: (t) => t.systemId,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomGradingScalesTableFilterComposer(
+            $db: $db,
+            $table: $db.customGradingScales,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return f(composer);
+  }
+}
+
+class $$CustomGradingSystemsTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomGradingSystemsTable> {
+  $$CustomGradingSystemsTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get name => $composableBuilder(
+    column: $table.name,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<bool> get isHigherBetter => $composableBuilder(
+    column: $table.isHigherBetter,
+    builder: (column) => ColumnOrderings(column),
+  );
+}
+
+class $$CustomGradingSystemsTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomGradingSystemsTable> {
+  $$CustomGradingSystemsTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<String> get name =>
+      $composableBuilder(column: $table.name, builder: (column) => column);
+
+  GeneratedColumn<bool> get isHigherBetter => $composableBuilder(
+    column: $table.isHigherBetter,
+    builder: (column) => column,
+  );
+
+  Expression<T> customGradingScalesRefs<T extends Object>(
+    Expression<T> Function($$CustomGradingScalesTableAnnotationComposer a) f,
+  ) {
+    final $$CustomGradingScalesTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.id,
+          referencedTable: $db.customGradingScales,
+          getReferencedColumn: (t) => t.systemId,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CustomGradingScalesTableAnnotationComposer(
+                $db: $db,
+                $table: $db.customGradingScales,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return f(composer);
+  }
+}
+
+class $$CustomGradingSystemsTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CustomGradingSystemsTable,
+          CustomGradingSystem,
+          $$CustomGradingSystemsTableFilterComposer,
+          $$CustomGradingSystemsTableOrderingComposer,
+          $$CustomGradingSystemsTableAnnotationComposer,
+          $$CustomGradingSystemsTableCreateCompanionBuilder,
+          $$CustomGradingSystemsTableUpdateCompanionBuilder,
+          (CustomGradingSystem, $$CustomGradingSystemsTableReferences),
+          CustomGradingSystem,
+          PrefetchHooks Function({bool customGradingScalesRefs})
+        > {
+  $$CustomGradingSystemsTableTableManager(
+    _$AppDatabase db,
+    $CustomGradingSystemsTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomGradingSystemsTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomGradingSystemsTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CustomGradingSystemsTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<String> name = const Value.absent(),
+                Value<bool> isHigherBetter = const Value.absent(),
+              }) => CustomGradingSystemsCompanion(
+                id: id,
+                name: name,
+                isHigherBetter: isHigherBetter,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required String name,
+                Value<bool> isHigherBetter = const Value.absent(),
+              }) => CustomGradingSystemsCompanion.insert(
+                id: id,
+                name: name,
+                isHigherBetter: isHigherBetter,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CustomGradingSystemsTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({customGradingScalesRefs = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [
+                if (customGradingScalesRefs) db.customGradingScales,
+              ],
+              addJoins: null,
+              getPrefetchedDataCallback: (items) async {
+                return [
+                  if (customGradingScalesRefs)
+                    await $_getPrefetchedData<
+                      CustomGradingSystem,
+                      $CustomGradingSystemsTable,
+                      CustomGradingScale
+                    >(
+                      currentTable: table,
+                      referencedTable: $$CustomGradingSystemsTableReferences
+                          ._customGradingScalesRefsTable(db),
+                      managerFromTypedResult: (p0) =>
+                          $$CustomGradingSystemsTableReferences(
+                            db,
+                            table,
+                            p0,
+                          ).customGradingScalesRefs,
+                      referencedItemsForCurrentItem: (item, referencedItems) =>
+                          referencedItems.where((e) => e.systemId == item.id),
+                      typedResults: items,
+                    ),
+                ];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CustomGradingSystemsTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CustomGradingSystemsTable,
+      CustomGradingSystem,
+      $$CustomGradingSystemsTableFilterComposer,
+      $$CustomGradingSystemsTableOrderingComposer,
+      $$CustomGradingSystemsTableAnnotationComposer,
+      $$CustomGradingSystemsTableCreateCompanionBuilder,
+      $$CustomGradingSystemsTableUpdateCompanionBuilder,
+      (CustomGradingSystem, $$CustomGradingSystemsTableReferences),
+      CustomGradingSystem,
+      PrefetchHooks Function({bool customGradingScalesRefs})
+    >;
+typedef $$CustomGradingScalesTableCreateCompanionBuilder =
+    CustomGradingScalesCompanion Function({
+      Value<int> id,
+      required int systemId,
+      required double minPercentage,
+      required double gradeValue,
+      Value<String?> gradeLabel,
+    });
+typedef $$CustomGradingScalesTableUpdateCompanionBuilder =
+    CustomGradingScalesCompanion Function({
+      Value<int> id,
+      Value<int> systemId,
+      Value<double> minPercentage,
+      Value<double> gradeValue,
+      Value<String?> gradeLabel,
+    });
+
+final class $$CustomGradingScalesTableReferences
+    extends
+        BaseReferences<
+          _$AppDatabase,
+          $CustomGradingScalesTable,
+          CustomGradingScale
+        > {
+  $$CustomGradingScalesTableReferences(
+    super.$_db,
+    super.$_table,
+    super.$_typedResult,
+  );
+
+  static $CustomGradingSystemsTable _systemIdTable(_$AppDatabase db) =>
+      db.customGradingSystems.createAlias(
+        $_aliasNameGenerator(
+          db.customGradingScales.systemId,
+          db.customGradingSystems.id,
+        ),
+      );
+
+  $$CustomGradingSystemsTableProcessedTableManager get systemId {
+    final $_column = $_itemColumn<int>('system_id')!;
+
+    final manager = $$CustomGradingSystemsTableTableManager(
+      $_db,
+      $_db.customGradingSystems,
+    ).filter((f) => f.id.sqlEquals($_column));
+    final item = $_typedResult.readTableOrNull(_systemIdTable($_db));
+    if (item == null) return manager;
+    return ProcessedTableManager(
+      manager.$state.copyWith(prefetchedData: [item]),
+    );
+  }
+}
+
+class $$CustomGradingScalesTableFilterComposer
+    extends Composer<_$AppDatabase, $CustomGradingScalesTable> {
+  $$CustomGradingScalesTableFilterComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnFilters<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get minPercentage => $composableBuilder(
+    column: $table.minPercentage,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<double> get gradeValue => $composableBuilder(
+    column: $table.gradeValue,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get gradeLabel => $composableBuilder(
+    column: $table.gradeLabel,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  $$CustomGradingSystemsTableFilterComposer get systemId {
+    final $$CustomGradingSystemsTableFilterComposer composer = $composerBuilder(
+      composer: this,
+      getCurrentColumn: (t) => t.systemId,
+      referencedTable: $db.customGradingSystems,
+      getReferencedColumn: (t) => t.id,
+      builder:
+          (
+            joinBuilder, {
+            $addJoinBuilderToRootComposer,
+            $removeJoinBuilderFromRootComposer,
+          }) => $$CustomGradingSystemsTableFilterComposer(
+            $db: $db,
+            $table: $db.customGradingSystems,
+            $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+            joinBuilder: joinBuilder,
+            $removeJoinBuilderFromRootComposer:
+                $removeJoinBuilderFromRootComposer,
+          ),
+    );
+    return composer;
+  }
+}
+
+class $$CustomGradingScalesTableOrderingComposer
+    extends Composer<_$AppDatabase, $CustomGradingScalesTable> {
+  $$CustomGradingScalesTableOrderingComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  ColumnOrderings<int> get id => $composableBuilder(
+    column: $table.id,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get minPercentage => $composableBuilder(
+    column: $table.minPercentage,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<double> get gradeValue => $composableBuilder(
+    column: $table.gradeValue,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  ColumnOrderings<String> get gradeLabel => $composableBuilder(
+    column: $table.gradeLabel,
+    builder: (column) => ColumnOrderings(column),
+  );
+
+  $$CustomGradingSystemsTableOrderingComposer get systemId {
+    final $$CustomGradingSystemsTableOrderingComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.systemId,
+          referencedTable: $db.customGradingSystems,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CustomGradingSystemsTableOrderingComposer(
+                $db: $db,
+                $table: $db.customGradingSystems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CustomGradingScalesTableAnnotationComposer
+    extends Composer<_$AppDatabase, $CustomGradingScalesTable> {
+  $$CustomGradingScalesTableAnnotationComposer({
+    required super.$db,
+    required super.$table,
+    super.joinBuilder,
+    super.$addJoinBuilderToRootComposer,
+    super.$removeJoinBuilderFromRootComposer,
+  });
+  GeneratedColumn<int> get id =>
+      $composableBuilder(column: $table.id, builder: (column) => column);
+
+  GeneratedColumn<double> get minPercentage => $composableBuilder(
+    column: $table.minPercentage,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<double> get gradeValue => $composableBuilder(
+    column: $table.gradeValue,
+    builder: (column) => column,
+  );
+
+  GeneratedColumn<String> get gradeLabel => $composableBuilder(
+    column: $table.gradeLabel,
+    builder: (column) => column,
+  );
+
+  $$CustomGradingSystemsTableAnnotationComposer get systemId {
+    final $$CustomGradingSystemsTableAnnotationComposer composer =
+        $composerBuilder(
+          composer: this,
+          getCurrentColumn: (t) => t.systemId,
+          referencedTable: $db.customGradingSystems,
+          getReferencedColumn: (t) => t.id,
+          builder:
+              (
+                joinBuilder, {
+                $addJoinBuilderToRootComposer,
+                $removeJoinBuilderFromRootComposer,
+              }) => $$CustomGradingSystemsTableAnnotationComposer(
+                $db: $db,
+                $table: $db.customGradingSystems,
+                $addJoinBuilderToRootComposer: $addJoinBuilderToRootComposer,
+                joinBuilder: joinBuilder,
+                $removeJoinBuilderFromRootComposer:
+                    $removeJoinBuilderFromRootComposer,
+              ),
+        );
+    return composer;
+  }
+}
+
+class $$CustomGradingScalesTableTableManager
+    extends
+        RootTableManager<
+          _$AppDatabase,
+          $CustomGradingScalesTable,
+          CustomGradingScale,
+          $$CustomGradingScalesTableFilterComposer,
+          $$CustomGradingScalesTableOrderingComposer,
+          $$CustomGradingScalesTableAnnotationComposer,
+          $$CustomGradingScalesTableCreateCompanionBuilder,
+          $$CustomGradingScalesTableUpdateCompanionBuilder,
+          (CustomGradingScale, $$CustomGradingScalesTableReferences),
+          CustomGradingScale,
+          PrefetchHooks Function({bool systemId})
+        > {
+  $$CustomGradingScalesTableTableManager(
+    _$AppDatabase db,
+    $CustomGradingScalesTable table,
+  ) : super(
+        TableManagerState(
+          db: db,
+          table: table,
+          createFilteringComposer: () =>
+              $$CustomGradingScalesTableFilterComposer($db: db, $table: table),
+          createOrderingComposer: () =>
+              $$CustomGradingScalesTableOrderingComposer(
+                $db: db,
+                $table: table,
+              ),
+          createComputedFieldComposer: () =>
+              $$CustomGradingScalesTableAnnotationComposer(
+                $db: db,
+                $table: table,
+              ),
+          updateCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                Value<int> systemId = const Value.absent(),
+                Value<double> minPercentage = const Value.absent(),
+                Value<double> gradeValue = const Value.absent(),
+                Value<String?> gradeLabel = const Value.absent(),
+              }) => CustomGradingScalesCompanion(
+                id: id,
+                systemId: systemId,
+                minPercentage: minPercentage,
+                gradeValue: gradeValue,
+                gradeLabel: gradeLabel,
+              ),
+          createCompanionCallback:
+              ({
+                Value<int> id = const Value.absent(),
+                required int systemId,
+                required double minPercentage,
+                required double gradeValue,
+                Value<String?> gradeLabel = const Value.absent(),
+              }) => CustomGradingScalesCompanion.insert(
+                id: id,
+                systemId: systemId,
+                minPercentage: minPercentage,
+                gradeValue: gradeValue,
+                gradeLabel: gradeLabel,
+              ),
+          withReferenceMapper: (p0) => p0
+              .map(
+                (e) => (
+                  e.readTable(table),
+                  $$CustomGradingScalesTableReferences(db, table, e),
+                ),
+              )
+              .toList(),
+          prefetchHooksCallback: ({systemId = false}) {
+            return PrefetchHooks(
+              db: db,
+              explicitlyWatchedTables: [],
+              addJoins:
+                  <
+                    T extends TableManagerState<
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic,
+                      dynamic
+                    >
+                  >(state) {
+                    if (systemId) {
+                      state =
+                          state.withJoin(
+                                currentTable: table,
+                                currentColumn: table.systemId,
+                                referencedTable:
+                                    $$CustomGradingScalesTableReferences
+                                        ._systemIdTable(db),
+                                referencedColumn:
+                                    $$CustomGradingScalesTableReferences
+                                        ._systemIdTable(db)
+                                        .id,
+                              )
+                              as T;
+                    }
+
+                    return state;
+                  },
+              getPrefetchedDataCallback: (items) async {
+                return [];
+              },
+            );
+          },
+        ),
+      );
+}
+
+typedef $$CustomGradingScalesTableProcessedTableManager =
+    ProcessedTableManager<
+      _$AppDatabase,
+      $CustomGradingScalesTable,
+      CustomGradingScale,
+      $$CustomGradingScalesTableFilterComposer,
+      $$CustomGradingScalesTableOrderingComposer,
+      $$CustomGradingScalesTableAnnotationComposer,
+      $$CustomGradingScalesTableCreateCompanionBuilder,
+      $$CustomGradingScalesTableUpdateCompanionBuilder,
+      (CustomGradingScale, $$CustomGradingScalesTableReferences),
+      CustomGradingScale,
+      PrefetchHooks Function({bool systemId})
+    >;
 
 class $AppDatabaseManager {
   final _$AppDatabase _db;
@@ -2966,6 +4235,10 @@ class $AppDatabaseManager {
       $$GradingComponentsTableTableManager(_db, _db.gradingComponents);
   $$AssessmentsTableTableManager get assessments =>
       $$AssessmentsTableTableManager(_db, _db.assessments);
+  $$CustomGradingSystemsTableTableManager get customGradingSystems =>
+      $$CustomGradingSystemsTableTableManager(_db, _db.customGradingSystems);
+  $$CustomGradingScalesTableTableManager get customGradingScales =>
+      $$CustomGradingScalesTableTableManager(_db, _db.customGradingScales);
 }
 
 // **************************************************************************

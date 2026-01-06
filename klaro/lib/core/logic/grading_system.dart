@@ -1,3 +1,5 @@
+import 'package:klaro/core/services/database.dart';
+
 class GradingSystem {
   /// Converts a raw percentage (0-100) to the UP Grading System (1.0 - 5.0)
   static double convertToUPGrade(double percentage) {
@@ -41,15 +43,57 @@ class GradingSystem {
     if (percentage >= 65) return 1.0;  // D
     return 0.0;                        // F
   }
+  
+  /// Converts using a custom grading system
+  static double convertWithCustomSystem(double percentage, List<CustomGradingScale> scales) {
+    if (scales.isEmpty) return 0.0;
+    
+    // Sort scales by minPercentage descending
+    final sortedScales = List<CustomGradingScale>.from(scales)
+      ..sort((a, b) => b.minPercentage.compareTo(a.minPercentage));
+    
+    // Find the first scale where percentage >= minPercentage
+    for (final scale in sortedScales) {
+      if (percentage >= scale.minPercentage) {
+        return scale.gradeValue;
+      }
+    }
+    
+    // If no match, return the lowest grade
+    return sortedScales.last.gradeValue;
+  }
 
   /// Generic conversion based on system string
   static double convert(double percentage, String system) {
     switch (system) {
-      case 'UP': return convertToUPGrade(percentage);
+      case '5Point': return convertToUPGrade(percentage);
       case '4Point': return convertTo4PointGrade(percentage);
       case 'US': return convertToUSGrade(percentage);
-      default: return convertToUPGrade(percentage);
+      default:
+        // For custom systems, return percentage (will be converted elsewhere)
+        if (system.startsWith('custom_')) {
+          return percentage; // Placeholder, actual conversion needs database
+        }
+        return convertToUPGrade(percentage);
     }
+  }
+  
+  /// Converts with custom system if systemId is prefixed with "custom_"
+  static Future<double> convertAsync(double percentage, String system, AppDatabase db) async {
+    // Check if system is a custom system (prefixed with "custom_")
+    if (system.startsWith('custom_')) {
+      final systemIdStr = system.substring(7); // Remove "custom_" prefix
+      final systemId = int.tryParse(systemIdStr);
+      if (systemId != null) {
+        final scales = await (db.select(db.customGradingScales)
+          ..where((s) => s.systemId.equals(systemId)))
+          .get();
+        return convertWithCustomSystem(percentage, scales);
+      }
+    }
+    
+    // Fall back to built-in systems
+    return convert(percentage, system);
   }
 
   /// Returns the color associated with the grade (works for all systems)
@@ -70,11 +114,34 @@ class GradingSystem {
 
   /// Returns the color based on the selected system
   static int getColor(double grade, String system) {
-    if (system == 'UP') {
+    if (system == '5Point' || system.startsWith('custom_')) {
+      // For custom systems, assume lower is better (like 5Point) unless we check the system
       return getGradeColor(grade);
     } else {
       return get4PointGradeColor(grade);
     }
+  }
+  
+  /// Returns the color based on the selected system with custom system support
+  static Future<int> getColorAsync(double grade, String system, AppDatabase db) async {
+    if (system.startsWith('custom_')) {
+      final systemIdStr = system.substring(7);
+      final systemId = int.tryParse(systemIdStr);
+      if (systemId != null) {
+        final customSystem = await (db.select(db.customGradingSystems)
+          ..where((s) => s.id.equals(systemId)))
+          .getSingleOrNull();
+        
+        if (customSystem != null) {
+          // Use appropriate color scheme based on isHigherBetter
+          return customSystem.isHigherBetter 
+              ? get4PointGradeColor(grade)
+              : getGradeColor(grade);
+        }
+      }
+    }
+    
+    return getColor(grade, system);
   }
 
   /// Converts a GPA (0.0 - 4.0) to US Letter Grade

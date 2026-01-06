@@ -138,7 +138,7 @@ class DashboardScreen extends ConsumerWidget {
                               
                               // Calculate percentage based on system for visual display
                               double percent;
-                              if (selectedSystem == 'UP') {
+                              if (selectedSystem == '5Point') {
                                 percent = (5.0 - gwa) / 4.0;
                               } else {
                                 percent = gwa / 4.0;
@@ -338,7 +338,7 @@ class _CourseCard extends ConsumerWidget {
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
-    final selectedSystem = ref.watch(preferencesProvider).selectedGradingSystem;
+    final selectedSystem = ref.watch(activeGradingSystemProvider);
     final gradeAsync = ref.watch(courseStandingProvider(course.id));
     
     return Card(
@@ -451,7 +451,7 @@ class _CourseCard extends ConsumerWidget {
                               ),
                             ),
                             Text(
-                              GradeDisplayHelper.getSystemLabel(selectedSystem),
+                              "Grade",
                               style: TextStyle(
                                 fontSize: 9,
                                 color: Colors.grey[600],
@@ -491,7 +491,7 @@ class _CourseCard extends ConsumerWidget {
                           ),
                         ),
                         Text(
-                          GradeDisplayHelper.getSystemLabel(selectedSystem),
+                          "Grade",
                           style: TextStyle(
                             fontSize: 9,
                             color: Colors.grey[600],
