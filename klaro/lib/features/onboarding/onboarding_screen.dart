@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/preferences_service.dart';
-import 'package:klaro/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:klaro/core/widgets/main_navigation.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class OnboardingScreen extends ConsumerStatefulWidget {
@@ -17,12 +17,15 @@ class _OnboardingScreenState extends ConsumerState<OnboardingScreen> {
   void _finish() async {
     // Save preference
     await ref.read(preferencesProvider).completeOnboarding(_selectedSystem);
+    
+    // Update the notifier to trigger MaterialApp rebuild
+    onboardingCompleteNotifier.value = true;
 
-    // Navigate to Dashboard (Remove back button)
+    // Navigate to MainNavigation (Remove back button)
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
       );
     }
   }

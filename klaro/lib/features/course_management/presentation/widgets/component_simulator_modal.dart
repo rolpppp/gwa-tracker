@@ -136,9 +136,9 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.85,
       ),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -148,7 +148,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
@@ -157,18 +157,18 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
           // Title
           Row(
             children: [
-              Icon(Icons.science, color: Colors.purple[700]),
+              Icon(Icons.science, color: Theme.of(context).primaryColor),
               const SizedBox(width: 8),
-              const Text(
+              Text(
                 "Grade Simulator",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
               ),
             ],
           ),
           const SizedBox(height: 4),
           Text(
             "Simulate component scores to see projected grade",
-            style: TextStyle(color: Colors.grey[600], fontSize: 13),
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
           ),
           const SizedBox(height: 24),
 
@@ -214,23 +214,23 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                   Container(
                     padding: const EdgeInsets.all(16),
                     decoration: BoxDecoration(
-                      color: Colors.grey[50],
+                      color: Theme.of(context).cardColor,
                       borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Colors.grey[200]!),
+                      border: Border.all(color: Theme.of(context).dividerColor),
                     ),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Row(
                           children: [
-                            Icon(Icons.tune, size: 18, color: Colors.grey[700]),
+                            Icon(Icons.tune, size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
                             const SizedBox(width: 8),
                             Text(
                               "Adjust Component Scores",
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
-                                color: Colors.grey[800],
+                                color: Theme.of(context).textTheme.bodyLarge?.color,
                               ),
                             ),
                           ],
@@ -249,9 +249,10 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                                     Expanded(
                                       child: Text(
                                         component.name,
-                                        style: const TextStyle(
+                                        style: TextStyle(
                                           fontWeight: FontWeight.w600,
                                           fontSize: 14,
+                                          color: Theme.of(context).textTheme.bodyLarge?.color,
                                         ),
                                         maxLines: 1,
                                         overflow: TextOverflow.ellipsis,
@@ -261,7 +262,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                                     Container(
                                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                       decoration: BoxDecoration(
-                                        color: Colors.purple[50],
+                                        color: Theme.of(context).primaryColor.withOpacity(0.1),
                                         borderRadius: BorderRadius.circular(6),
                                       ),
                                       child: Text(
@@ -269,7 +270,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                                         style: TextStyle(
                                           fontWeight: FontWeight.bold,
                                           fontSize: 13,
-                                          color: Colors.purple[700],
+                                          color: Theme.of(context).primaryColor,
                                         ),
                                       ),
                                     ),
@@ -280,7 +281,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                                   "Weight: ${(component.weightPercent * 100).toStringAsFixed(0)}%",
                                   style: TextStyle(
                                     fontSize: 11,
-                                    color: Colors.grey[600],
+                                    color: Theme.of(context).textTheme.bodySmall?.color,
                                   ),
                                 ),
                                 const SizedBox(height: 8),
@@ -289,10 +290,10 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                                     trackHeight: 6,
                                     thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
                                     overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                                    activeTrackColor: Colors.purple[400],
-                                    inactiveTrackColor: Colors.grey[300],
-                                    thumbColor: Colors.purple[700],
-                                    overlayColor: Colors.purple[100],
+                                    activeTrackColor: Theme.of(context).primaryColor,
+                                    inactiveTrackColor: Theme.of(context).disabledColor,
+                                    thumbColor: Theme.of(context).primaryColor,
+                                    overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
                                   ),
                                   child: Slider(
                                     value: score,
@@ -321,7 +322,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
                     style: TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 13,
-                      color: Colors.grey[700],
+                      color: Theme.of(context).textTheme.bodyMedium?.color,
                     ),
                   ),
                   const SizedBox(height: 8),
@@ -444,14 +445,14 @@ class _PresetButton extends StatelessWidget {
       onPressed: onTap,
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        side: BorderSide(color: Colors.purple[300]!),
+        side: BorderSide(color: Theme.of(context).primaryColor),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),
       ),
       child: Text(
         label,
-        style: TextStyle(fontSize: 12, color: Colors.purple[700]),
+        style: TextStyle(fontSize: 12, color: Theme.of(context).primaryColor),
       ),
     );
   }

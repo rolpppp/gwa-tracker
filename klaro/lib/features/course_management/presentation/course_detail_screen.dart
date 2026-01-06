@@ -34,12 +34,12 @@ class CourseDetailScreen extends ConsumerWidget {
     final componentsAsync = ref.watch(courseComponentsProvider(course.id));
 
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F7FA),
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       appBar: AppBar(
         title: Text(course.code),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        foregroundColor: Colors.black,
+        // foregroundColor: Colors.black, // Let theme handle this
         actions: [
           PopupMenuButton<String>(
             icon: Icon(PhosphorIcons.dotsThreeVertical()),
@@ -218,7 +218,7 @@ class _CourseHeader extends ConsumerWidget {
       width: double.infinity,
       padding: const EdgeInsets.all(24),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(24),
       ),
       child: Column(
@@ -247,7 +247,7 @@ class _CourseHeader extends ConsumerWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: Colors.grey[200],
+                            color: Theme.of(context).colorScheme.surfaceContainerHighest,
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Column(
@@ -257,14 +257,14 @@ class _CourseHeader extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 24,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                               Text(
                                 "${(standing.weightGraded * 100).toStringAsFixed(0)}% graded",
                                 style: TextStyle(
                                   fontSize: 10,
-                                  color: Colors.grey[600],
+                                  color: Theme.of(context).colorScheme.onSurfaceVariant,
                                 ),
                               ),
                             ],
@@ -473,14 +473,19 @@ class _CourseHeader extends ConsumerWidget {
           // Goal Simulator Button
           componentsAsync.when(
             data: (components) {
+              final isDark = Theme.of(context).brightness == Brightness.dark;
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
                   gradient: LinearGradient(
-                    colors: [Colors.purple.shade50, Colors.blue.shade50],
+                    colors: isDark 
+                        ? [Colors.purple.shade900.withOpacity(0.5), Colors.blue.shade900.withOpacity(0.5)]
+                        : [Colors.purple.shade50, Colors.blue.shade50],
                   ),
                   borderRadius: BorderRadius.circular(16),
-                  border: Border.all(color: Colors.purple.shade200),
+                  border: Border.all(
+                    color: isDark ? Colors.purple.shade700 : Colors.purple.shade200
+                  ),
                 ),
                 child: Material(
                   color: Colors.transparent,
@@ -510,14 +515,17 @@ class _CourseHeader extends ConsumerWidget {
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(Icons.trending_up, color: Colors.purple.shade700),
+                          Icon(
+                            Icons.trending_up, 
+                            color: isDark ? Colors.purple.shade200 : Colors.purple.shade700
+                          ),
                           const SizedBox(width: 8),
                           Text(
                             "Grade Simulator",
                             style: TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
-                              color: Colors.purple.shade700,
+                              color: isDark ? Colors.purple.shade200 : Colors.purple.shade700,
                             ),
                           ),
                         ],
@@ -549,10 +557,10 @@ class _StatItem extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(label, style: const TextStyle(color: Colors.grey, fontSize: 12)),
-        Text(value, style: const TextStyle(
+        Text(value, style: TextStyle(
           fontSize: 20, 
           fontWeight: FontWeight.bold,
-          color: Colors.black,
+          color: Theme.of(context).textTheme.bodyLarge?.color,
         )),
       ],
     );
@@ -707,11 +715,11 @@ class _GradingComponentTile extends ConsumerWidget {
                       ),
                       TextSpan(
                         text: " (Real: ${realScore.toStringAsFixed(1)}%) ",
-                        style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 12),
                       ),
                       TextSpan(
                         text: "• Weight: ${(component.weightPercent * 100).toInt()}%",
-                        style: TextStyle(color: Colors.grey.shade600),
+                        style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color),
                       ),
                     ],
                   ),
@@ -738,7 +746,7 @@ class _GradingComponentTile extends ConsumerWidget {
                       a.name,
                       style: TextStyle(
                         fontStyle: a.isGoal ? FontStyle.italic : FontStyle.normal,
-                        color: a.isGoal ? Colors.purple : Colors.black,
+                        color: a.isGoal ? Colors.purple : Theme.of(context).textTheme.bodyMedium?.color,
                       ),
                     ),
                     subtitle: a.isExcused ? const Text("Excused", style: TextStyle(color: Colors.orange)) : null,
@@ -749,7 +757,7 @@ class _GradingComponentTile extends ConsumerWidget {
                           "${a.scoreObtained} / ${a.totalItems}",
                           style: TextStyle(
                             fontWeight: FontWeight.bold,
-                            color: a.isGoal ? Colors.purple : Colors.black,
+                            color: a.isGoal ? Colors.purple : Theme.of(context).textTheme.bodyMedium?.color,
                           ),
                         ),
                         const SizedBox(width: 8),

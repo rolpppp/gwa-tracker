@@ -64,11 +64,84 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           const SizedBox(height: 24),
           
           _buildSection(
+            title: "Appearance",
+            children: [
+              ValueListenableBuilder<String>(
+                valueListenable: themeModeNotifier,
+                builder: (context, currentMode, _) {
+                  return ListTile(
+                    leading: Icon(PhosphorIcons.paintBrushBroad()),
+                    title: const Text("Theme"),
+                    subtitle: Text(
+                      currentMode == 'system' ? 'System Default' : 
+                      currentMode == 'light' ? 'Light Mode' : 'Dark Mode'
+                    ),
+                    trailing: DropdownButton<String>(
+                      value: currentMode,
+                      underline: const SizedBox(),
+                      icon: Icon(PhosphorIcons.caretDown(), size: 16),
+                      items: const [
+                        DropdownMenuItem(value: 'system', child: Text("System")),
+                        DropdownMenuItem(value: 'light', child: Text("Light")),
+                        DropdownMenuItem(value: 'dark', child: Text("Dark")),
+                      ],
+                      onChanged: (val) {
+                        if (val != null) {
+                          ref.read(preferencesProvider).setThemeMode(val);
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(PhosphorIcons.palette()),
+                title: Row(
+                  children: [
+                    const Text("Custom Theme"),
+                    const SizedBox(width: 8),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            Colors.purple.shade400,
+                            Colors.blue.shade400,
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(6),
+                      ),
+                      child: const Text(
+                        "SOON",
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 8,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.3,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                subtitle: const Text("Create your own color scheme"),
+                trailing: Icon(PhosphorIcons.lockKey(), color: Colors.grey[400], size: 20),
+                onTap: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    const SnackBar(content: Text("Custom themes are coming in the next update!")),
+                  );
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 24),
+
+          _buildSection(
             title: "Grading System",
             children: [
-              _buildGradingSystemTile('UP', 'UP System (1.0-5.0)', currentSystem),
+              _buildGradingSystemTile('UP', '5-Point Scale (1.0-5.0)', currentSystem),
               _buildGradingSystemTile('4Point', '4-Point GPA (0.0-4.0)', currentSystem),
               _buildGradingSystemTile('US', 'US Letter Grade (A-F)', currentSystem),
+              _buildCustomGradingSystemTile(),
             ],
           ),
           const SizedBox(height: 24),
@@ -189,9 +262,88 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
     );
   }
 
+  Widget _buildCustomGradingSystemTile() {
+    return ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: const Text("🛠️", style: TextStyle(fontSize: 18)),
+      ),
+      title: Row(
+        children: [
+          const Flexible(
+            child: Text(
+              "Custom Grading System",
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ),
+          const SizedBox(width: 8),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  Colors.purple.shade400,
+                  Colors.blue.shade400,
+                ],
+              ),
+              borderRadius: BorderRadius.circular(6),
+            ),
+            child: const Text(
+              "SOON",
+              style: TextStyle(
+                color: Colors.white,
+                fontSize: 8,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 0.3,
+              ),
+            ),
+          ),
+        ],
+      ),
+      subtitle: const Text(
+        "Create your own or use community systems",
+        style: TextStyle(fontSize: 12),
+      ),
+      trailing: Icon(PhosphorIcons.lockKey(), color: Colors.grey[400], size: 20),
+      onTap: () {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text("Custom grading systems are coming soon!")),
+        );
+      },
+    );
+  }
+
   Widget _buildGradingSystemTile(String value, String label, String currentSystem) {
     final isSelected = currentSystem == value;
+    
+    // Helper to get icon for system
+    String getIcon(String val) {
+      switch(val) {
+        case 'UP': return "🎯";
+        case '4Point': return "🎓";
+        case 'US': return "📝";
+        default: return "📊";
+      }
+    }
+
     return ListTile(
+      leading: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: Colors.grey[100],
+          shape: BoxShape.circle,
+        ),
+        alignment: Alignment.center,
+        child: Text(getIcon(value), style: const TextStyle(fontSize: 18)),
+      ),
       title: Text(label),
       trailing: isSelected 
           ? Icon(PhosphorIcons.checkCircle(), color: Theme.of(context).primaryColor)

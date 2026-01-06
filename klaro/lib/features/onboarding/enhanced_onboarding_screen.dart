@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_animate/flutter_animate.dart';
 import 'package:klaro/core/services/preferences_service.dart';
-import 'package:klaro/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:klaro/core/widgets/main_navigation.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class EnhancedOnboardingScreen extends ConsumerStatefulWidget {
@@ -61,10 +61,15 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
       name: _nameController.text.trim(),
       institution: _institutionController.text.trim(),
     );
+    
     if (mounted) {
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (_) => const DashboardScreen()),
+      // Navigate to MainNavigation and remove all previous routes
+      // We use explicit navigation here instead of updating the ValueNotifier
+      // to ensure the UI transition is smooth and the new Scaffold is properly initialized.
+      // The change will be picked up by main.dart on next app restart.
+      Navigator.of(context, rootNavigator: true).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (_) => const MainNavigation()),
+        (route) => false,
       );
     }
   }
@@ -72,7 +77,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.white,
+      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
       resizeToAvoidBottomInset: true,
       body: SafeArea(
         child: Column(
@@ -114,7 +119,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
               height: 4,
               margin: EdgeInsets.only(right: index < 3 ? 8 : 0),
               decoration: BoxDecoration(
-                color: isActive ? Theme.of(context).primaryColor : Colors.grey[200],
+                color: isActive ? Theme.of(context).primaryColor : Theme.of(context).colorScheme.outlineVariant,
                 borderRadius: BorderRadius.circular(2),
               ),
             ).animate(target: isActive ? 1 : 0).scaleX(
@@ -164,7 +169,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
           const SizedBox(height: 12),
           
           Text(
-            "Your Academic GPS",
+            "Your GWA Buddy",
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
               color: Theme.of(context).primaryColor,
               fontWeight: FontWeight.w600,
@@ -505,8 +510,8 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
               child: Column(
                 children: [
                   _GradingSystemCard(
-                    icon: "🇵🇭",
-                    title: "UP System",
+                    icon: "🎯",
+                    title: "5-Point Scale",
                     subtitle: "1.0 (Excellent) to 5.0 (Fail)",
                     example: "92% = 1.25",
                     value: "UP",
@@ -517,7 +522,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                   const SizedBox(height: 12),
                   
                   _GradingSystemCard(
-                    icon: "🌎",
+                    icon: "🎓",
                     title: "4-Point GPA",
                     subtitle: "4.0 (Excellent) to 0.0 (Fail)",
                     example: "92% = 3.0 (Very Good)",
@@ -529,7 +534,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                   const SizedBox(height: 12),
                   
                   _GradingSystemCard(
-                    icon: "🎓",
+                    icon: "📝",
                     title: "US Letter Grade",
                     subtitle: "A (4.0) to F (0.0)",
                     example: "92% = A (4.0)",
@@ -537,6 +542,11 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 400.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+                  
+                  const SizedBox(height: 12),
+                  
+                  _CustomGradingSystemCard(
+                  ).animate(delay: 500.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
                 ],
               ),
             ),
@@ -601,6 +611,127 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _CustomGradingSystemCard extends StatelessWidget {
+  const _CustomGradingSystemCard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Opacity(
+      opacity: 0.6,
+      child: Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: Colors.grey[50],
+          border: Border.all(
+            color: Colors.grey[300]!,
+            width: 1.5,
+            style: BorderStyle.solid,
+          ),
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48,
+              height: 48,
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: const Center(
+                child: Text(
+                  "🛠️",
+                  style: TextStyle(fontSize: 24),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Flexible(
+                        child: Text(
+                          "Custom Grading System",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 16,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 6,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              Colors.purple.shade400,
+                              Colors.blue.shade400,
+                            ],
+                          ),
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        child: const Text(
+                          "SOON",
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 8,
+                            fontWeight: FontWeight.bold,
+                            letterSpacing: 0.3,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    "Create your own or use community systems",
+                    style: TextStyle(
+                      color: Colors.grey[600],
+                      fontSize: 12,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 4,
+                    ),
+                    decoration: BoxDecoration(
+                      color: Colors.grey[200],
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      "✨ Define custom grade scales",
+                      style: TextStyle(
+                        color: Colors.grey[700],
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(
+              Icons.lock_outline,
+              color: Colors.grey[400],
+              size: 24,
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:klaro/features/dashboard/presentation/dashboard_screen.dart';
+import 'package:klaro/features/badges/presentation/badges_screen.dart';
 import 'package:klaro/features/settings/presentation/settings_screen.dart';
 import 'package:klaro/features/dashboard/presentation/widgets/add_course_modal.dart';
 
@@ -16,6 +17,7 @@ class _MainNavigationState extends State<MainNavigation> {
 
   final List<Widget> _screens = const [
     DashboardScreen(),
+    BadgesScreen(),
     SettingsScreen(),
   ];
 
@@ -37,36 +39,55 @@ class _MainNavigationState extends State<MainNavigation> {
               },
               backgroundColor: Theme.of(context).colorScheme.secondary,
               child: Icon(PhosphorIcons.plus(), color: Colors.white),
+              elevation: 4,
             )
           : null,
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
-      bottomNavigationBar: BottomAppBar(
-        shape: const CircularNotchedRectangle(),
-        notchMargin: 8.0,
-        padding: EdgeInsets.zero,
-        height: 70,
-        child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: _buildNavItem(
-                icon: PhosphorIcons.house(),
-                iconFilled: PhosphorIcons.house(PhosphorIconsStyle.fill),
-                label: 'Dashboard',
-                index: 0,
-              ),
-            ),
-            const SizedBox(width: 48), // Space for FAB
-            Expanded(
-              child: _buildNavItem(
-                icon: PhosphorIcons.gear(),
-                iconFilled: PhosphorIcons.gear(PhosphorIconsStyle.fill),
-                label: 'Settings',
-                index: 1,
-              ),
+      floatingActionButtonLocation: FloatingActionButtonLocation.endFloat,
+      bottomNavigationBar: Container(
+        decoration: BoxDecoration(
+          color: Theme.of(context).colorScheme.surface,
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.1),
+              blurRadius: 8,
+              offset: const Offset(0, -2),
             ),
           ],
+        ),
+        child: SafeArea(
+          child: SizedBox(
+            height: 70,
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: _buildNavItem(
+                    icon: PhosphorIcons.house(),
+                    iconFilled: PhosphorIcons.house(PhosphorIconsStyle.fill),
+                    label: 'Dashboard',
+                    index: 0,
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    icon: PhosphorIcons.medal(),
+                    iconFilled: PhosphorIcons.medal(PhosphorIconsStyle.fill),
+                    label: 'Badges',
+                    index: 1,
+                  ),
+                ),
+                Expanded(
+                  child: _buildNavItem(
+                    icon: PhosphorIcons.gear(),
+                    iconFilled: PhosphorIcons.gear(PhosphorIconsStyle.fill),
+                    label: 'Settings',
+                    index: 2,
+                  ),
+                ),
+              ],
+            ),
+          ),
         ),
       ),
     );

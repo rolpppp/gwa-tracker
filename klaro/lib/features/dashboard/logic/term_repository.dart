@@ -15,22 +15,21 @@ final activeTermProvider = StreamProvider<Term?>((ref) {
 });
 
 // Provider for courses in the active term
-final coursesForActiveTermProvider = StreamProvider<List<Course>>((ref) async* {
+final coursesForActiveTermProvider = StreamProvider<List<Course>>((ref) {
   final db = ref.watch(databaseProvider);
   
-  // Watch the active term directly
-  await for (final activeTerm in (db.select(db.terms)..where((t) => t.isActive.equals(true))).watchSingleOrNull()) {
-    if (activeTerm == null) {
-      yield [];
-      continue;
-    }
-    
-    // Watch courses for this specific term
-    await for (final courses in (db.select(db.courses)..where((c) => c.termId.equals(activeTerm.id))).watch()) {
-      yield courses;
-      break; // Break inner loop to re-check active term
-    }
-  }
+  // Use a customized query that joins with the terms table
+  // This ensures the stream is robust and updates whenever:
+  // 1. A course is added/modified/deleted
+  // 2. The active term changes (because of the WHERE clause on the joined table)
+  return (db.select(db.courses)
+      .join([
+        innerJoin(db.terms, db.terms.id.equalsExp(db.courses.termId))
+      ])
+      ..where(db.terms.isActive.equals(true))
+    )
+    .watch()
+    .map((rows) => rows.map((row) => row.readTable(db.courses)).toList());
 });
 
 // Provider for term actions

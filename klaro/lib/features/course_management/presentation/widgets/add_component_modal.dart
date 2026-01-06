@@ -132,8 +132,8 @@ class _AddComponentModalState extends ConsumerState<AddComponentModal> {
               child: ElevatedButton(
                 onPressed: _save,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.primaryColor,
-                  foregroundColor: Colors.white,
+                  backgroundColor: Theme.of(context).primaryColor,
+                  foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 ),
                 child: Text(widget.component != null ? "Update Category" : "Create Category"),
               ),

@@ -70,9 +70,9 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
 
     return Container(
       padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      decoration: const BoxDecoration(
-        color: Colors.white,
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+      decoration: BoxDecoration(
+        color: Theme.of(context).scaffoldBackgroundColor,
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -82,21 +82,21 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
             width: 40,
             height: 4,
             decoration: BoxDecoration(
-              color: Colors.grey[300],
+              color: Theme.of(context).dividerColor,
               borderRadius: BorderRadius.circular(2),
             ),
           ),
           const SizedBox(height: 20),
 
           // Title
-          const Text(
+          Text(
             "Grade Simulator",
-            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+            style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
           ),
           const SizedBox(height: 4),
           Text(
             "${(remainingWeight * 100).toInt()}% of course remaining",
-            style: TextStyle(color: Colors.grey[600], fontSize: 14),
+            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 14),
           ),
           const SizedBox(height: 24),
 
@@ -297,10 +297,10 @@ class _GradeCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: isHighlight ? color.withOpacity(0.1) : Colors.grey[100],
+        color: isHighlight ? color.withOpacity(0.1) : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
         border: Border.all(
-          color: isHighlight ? color.withOpacity(0.4) : Colors.grey[300]!,
+          color: isHighlight ? color.withOpacity(0.4) : Theme.of(context).dividerColor,
           width: isHighlight ? 2 : 1,
         ),
       ),
@@ -312,7 +312,7 @@ class _GradeCard extends StatelessWidget {
               Text(
                 label,
                 style: TextStyle(
-                  color: Colors.grey[600],
+                  color: Theme.of(context).textTheme.bodySmall?.color,
                   fontSize: 12,
                   fontWeight: FontWeight.w500,
                 ),
@@ -360,7 +360,7 @@ class _PresetButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return Expanded(
       child: Material(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(8),
         child: InkWell(
           onTap: onTap,
@@ -368,16 +368,16 @@ class _PresetButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              border: Border.all(color: Colors.grey[300]!),
+              border: Border.all(color: Theme.of(context).dividerColor),
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(
               child: Text(
                 label,
-                style: const TextStyle(
+                style: TextStyle(
                   fontSize: 13,
                   fontWeight: FontWeight.w600,
-                  color: Color(0xFF6B46C1),
+                  color: Theme.of(context).primaryColor,
                 ),
               ),
             ),

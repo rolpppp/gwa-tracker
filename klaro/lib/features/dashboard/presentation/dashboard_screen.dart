@@ -12,6 +12,16 @@ import 'package:klaro/core/services/preferences_service.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:klaro/features/dashboard/presentation/widgets/term_selector.dart';
 
+// State for toggling between Real/Projected GWA
+final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(ShowRealGwaNotifier.new);
+
+class ShowRealGwaNotifier extends Notifier<bool> {
+  @override
+  bool build() => false;
+
+  void toggle() => state = !state;
+}
+
 // Change to ConsumerWidget
 class DashboardScreen extends ConsumerWidget {
   const DashboardScreen({super.key});
@@ -20,9 +30,13 @@ class DashboardScreen extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     // Watch the Async Data from DB
     final activeTermAsync = ref.watch(activeTermProvider);
-    final gwaAsync = ref.watch(overallGwaProvider);
-    final userName = ref.watch(preferencesProvider).userName;
-    final institution = ref.watch(preferencesProvider).institution;
+    final showRealGwa = ref.watch(showRealGwaProvider);
+    final gwaAsync = showRealGwa ? ref.watch(realGwaProvider) : ref.watch(overallGwaProvider);
+    
+    final prefs = ref.watch(preferencesProvider);
+    final selectedSystem = ref.watch(activeGradingSystemProvider);
+    final userName = prefs.userName;
+    final institution = prefs.institution;
 
     return Scaffold(
       body: CustomScrollView(
@@ -42,7 +56,7 @@ class DashboardScreen extends ConsumerWidget {
                     end: Alignment.bottomRight,
                     colors: [
                       Theme.of(context).colorScheme.secondary.withOpacity(0.1),
-                      Colors.white,
+                      Theme.of(context).colorScheme.surface,
                     ],
                   ),
                 ),
@@ -58,7 +72,7 @@ class DashboardScreen extends ConsumerWidget {
                         // Personalized greeting
                         if (userName.isNotEmpty) ...[
                           Text(
-                            "Hello, $userName! 👋",
+                            "Hello, $userName!",
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
@@ -85,34 +99,40 @@ class DashboardScreen extends ConsumerWidget {
                         Center(
                           child: gwaAsync.when(
                             data: (gwa) {
-                              final selectedSystem = ref.read(preferencesProvider).selectedGradingSystem;
+                              final systemLabel = GradeDisplayHelper.getSystemLabel(selectedSystem);
+                              final label = showRealGwa ? "Real $systemLabel" : "Projected $systemLabel";
                               
                               // If no data yet, show placeholder
                               if (gwa == null) {
-                                return CircularPercentIndicator(
-                                  radius: 70.0,
-                                  lineWidth: 12.0,
-                                  percent: 0,
-                                  center: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        GradeDisplayHelper.getSystemLabel(selectedSystem),
-                                        style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                      ),
-                                      const Text(
-                                        "--",
-                                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: Colors.grey),
-                                      ),
-                                      const Text(
-                                        "GWA",
-                                        style: TextStyle(color: Colors.grey, fontSize: 10),
-                                      ),
-                                    ],
+                                return GestureDetector(
+                                  onTap: () {
+                                  ref.read(showRealGwaProvider.notifier).toggle();
+                                },
+                                  child: CircularPercentIndicator(
+                                    radius: 70.0,
+                                    lineWidth: 12.0,
+                                    percent: 0,
+                                    center: Column(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Text(
+                                          GradeDisplayHelper.getSystemLabel(selectedSystem),
+                                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                        ),
+                                        const Text(
+                                          "--",
+                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: Colors.grey),
+                                        ),
+                                        Text(
+                                          label,
+                                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                        ),
+                                      ],
+                                    ),
+                                    progressColor: Colors.grey.shade300,
+                                    backgroundColor: Colors.grey.shade200,
+                                    circularStrokeCap: CircularStrokeCap.round,
                                   ),
-                                  progressColor: Colors.grey.shade300,
-                                  backgroundColor: Colors.grey.shade200,
-                                  circularStrokeCap: CircularStrokeCap.round,
                                 );
                               }
                               
@@ -126,35 +146,40 @@ class DashboardScreen extends ConsumerWidget {
                               if (percent < 0) percent = 0;
                               if (percent > 1) percent = 1;
 
-                              return CircularPercentIndicator(
-                                radius: 70.0,
-                                lineWidth: 12.0,
-                                percent: percent,
-                                center: Column(
-                                  mainAxisAlignment: MainAxisAlignment.center,
-                                  children: [
-                                    Text(
-                                      GradeDisplayHelper.getSystemLabel(selectedSystem),
-                                      style: const TextStyle(color: Colors.grey, fontSize: 12),
-                                    ),
-                                    Text(
-                                      gwa.toStringAsFixed(2),
-                                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
-                                    ),
-                                    const Text(
-                                      "GWA",
-                                      style: TextStyle(color: Colors.grey, fontSize: 10),
-                                    ),
-                                  ],
+                              return GestureDetector(
+                                onTap: () {
+                                  ref.read(showRealGwaProvider.notifier).toggle();
+                                },
+                                child: CircularPercentIndicator(
+                                  radius: 70.0,
+                                  lineWidth: 12.0,
+                                  percent: percent,
+                                  center: Column(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      Text(
+                                        GradeDisplayHelper.getSystemLabel(selectedSystem),
+                                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                      ),
+                                      Text(
+                                        selectedSystem == 'US' 
+                                          ? GradingSystem.getUSLetter(gwa)
+                                          : gwa.toStringAsFixed(2),
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                                      ),
+                                      Text(
+                                        label,
+                                        style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                      ),
+                                    ],
+                                  ),
+                                  progressColor: Color(GradingSystem.getColor(gwa, selectedSystem)),
+                                  backgroundColor: Theme.of(context).brightness == Brightness.dark 
+                                      ? Colors.grey.shade800 
+                                      : Colors.grey.shade200,
+                                  circularStrokeCap: CircularStrokeCap.round,
+                                  animation: true,
                                 ),
-                                progressColor: Color(
-                                  selectedSystem == 'UP'
-                                      ? GradingSystem.getGradeColor(gwa)
-                                      : GradingSystem.get4PointGradeColor(gwa)
-                                ),
-                                backgroundColor: Colors.grey.shade200,
-                                circularStrokeCap: CircularStrokeCap.round,
-                                animation: true,
                               );
                             },
                             loading: () => const SizedBox(

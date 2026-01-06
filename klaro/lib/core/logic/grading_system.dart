@@ -42,6 +42,16 @@ class GradingSystem {
     return 0.0;                        // F
   }
 
+  /// Generic conversion based on system string
+  static double convert(double percentage, String system) {
+    switch (system) {
+      case 'UP': return convertToUPGrade(percentage);
+      case '4Point': return convertTo4PointGrade(percentage);
+      case 'US': return convertToUSGrade(percentage);
+      default: return convertToUPGrade(percentage);
+    }
+  }
+
   /// Returns the color associated with the grade (works for all systems)
   static int getGradeColor(double grade) {
     if (grade <= 1.25) return 0xFF4ADE80; // Mint Green (Excellent)
@@ -56,5 +66,30 @@ class GradingSystem {
     if (grade >= 2.5) return 0xFF22D3EE; // Cyan (Good)
     if (grade >= 1.5) return 0xFFFACC15; // Yellow (Warning)
     return 0xFFEF4444; // Red (Fail)
+  }
+
+  /// Returns the color based on the selected system
+  static int getColor(double grade, String system) {
+    if (system == 'UP') {
+      return getGradeColor(grade);
+    } else {
+      return get4PointGradeColor(grade);
+    }
+  }
+
+  /// Converts a GPA (0.0 - 4.0) to US Letter Grade
+  /// This is an approximation based on standard GPA scales
+  static String getUSLetter(double gpa) {
+    if (gpa >= 4.0) return 'A';
+    if (gpa >= 3.7) return 'A-';
+    if (gpa >= 3.3) return 'B+';
+    if (gpa >= 3.0) return 'B';
+    if (gpa >= 2.7) return 'B-';
+    if (gpa >= 2.3) return 'C+';
+    if (gpa >= 2.0) return 'C';
+    if (gpa >= 1.7) return 'C-';
+    if (gpa >= 1.3) return 'D+';
+    if (gpa >= 1.0) return 'D';
+    return 'F';
   }
 }

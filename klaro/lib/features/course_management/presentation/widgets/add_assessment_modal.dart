@@ -134,7 +134,10 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
             height: 50,
             child: ElevatedButton(
               onPressed: _save,
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.accentColor, foregroundColor: Colors.white),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Theme.of(context).colorScheme.secondary,
+                foregroundColor: Theme.of(context).colorScheme.onSecondary,
+              ),
               child: Text(widget.assessment != null ? "Update Score" : "Save Score"),
             ),
           ),

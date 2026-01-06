@@ -18,6 +18,10 @@ void main() async {
   // Load preferences before running the app
   final prefs = await SharedPreferences.getInstance();
   final preferencesService = PreferencesService(prefs);
+  
+  // Initialize the notifier with current onboarding status
+  onboardingCompleteNotifier.value = preferencesService.isOnboardingComplete;
+  themeModeNotifier.value = preferencesService.themeMode;
 
   // Create a single container with overrides
   final container = ProviderContainer(
@@ -43,24 +47,40 @@ void main() async {
   runApp(
     UncontrolledProviderScope(
       container: container,
-      child: Klaro(showOnboarding: !preferencesService.isOnboardingComplete),
+      child: const KlaroApp(),
     ),
   );
 }
 
-class Klaro extends StatelessWidget {
-  final bool showOnboarding;
-
-  const Klaro({super.key, required this.showOnboarding});
+class KlaroApp extends StatelessWidget {
+  const KlaroApp({super.key});
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Klaro',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      // 3. Decide where to go
-      home: showOnboarding ? const EnhancedOnboardingScreen() : const MainNavigation(),
+    // Listen to onboarding status changes using ValueListenableBuilder
+    return ValueListenableBuilder<String>(
+      valueListenable: themeModeNotifier,
+      builder: (context, themeModeStr, _) {
+        final mode = themeModeStr == 'light'
+            ? ThemeMode.light
+            : themeModeStr == 'dark'
+                ? ThemeMode.dark
+                : ThemeMode.system;
+        
+        return ValueListenableBuilder<bool>(
+          valueListenable: onboardingCompleteNotifier,
+          builder: (context, isComplete, _) {
+            return MaterialApp(
+              title: 'Klaro',
+              debugShowCheckedModeBanner: false,
+              theme: AppTheme.lightTheme,
+              darkTheme: AppTheme.darkTheme,
+              themeMode: mode,
+              home: isComplete ? const MainNavigation() : const EnhancedOnboardingScreen(),
+            );
+          },
+        );
+      },
     );
   }
 }

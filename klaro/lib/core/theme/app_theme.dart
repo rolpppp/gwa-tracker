@@ -40,4 +40,32 @@ class AppTheme {
       ),
     );
   }
+
+  static ThemeData get darkTheme {
+    return FlexThemeData.dark(
+      scheme: FlexScheme.jungle,
+      surfaceMode: FlexSurfaceMode.levelSurfacesLowScaffold,
+      blendLevel: 13,
+      subThemesData: const FlexSubThemesData(
+        blendOnLevel: 20,
+        useTextTheme: true,
+        useM2StyleDividerInM3: true,
+        defaultRadius: 24.0,
+        elevatedButtonRadius: 16.0,
+        inputDecoratorRadius: 16.0,
+        fabRadius: 32.0,
+      ),
+      visualDensity: FlexColorScheme.comfortablePlatformDensity,
+      useMaterial3: true,
+      swapLegacyOnMaterial3: true,
+      fontFamily: GoogleFonts.poppins().fontFamily,
+    ).copyWith(
+      colorScheme: const ColorScheme.dark(
+        primary: primaryColor,
+        secondary: accentColor,
+        surface: Color(0xFF1F2937),
+      ),
+      scaffoldBackgroundColor: const Color(0xFF111827),
+    );
+  }
 }
