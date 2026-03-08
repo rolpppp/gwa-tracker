@@ -13,7 +13,9 @@ import 'package:percent_indicator/percent_indicator.dart';
 import 'package:klaro/features/dashboard/presentation/widgets/term_selector.dart';
 
 // State for toggling between Real/Projected GWA
-final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(ShowRealGwaNotifier.new);
+final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(
+  ShowRealGwaNotifier.new,
+);
 
 class ShowRealGwaNotifier extends Notifier<bool> {
   @override
@@ -31,8 +33,10 @@ class DashboardScreen extends ConsumerWidget {
     // Watch the Async Data from DB
     final activeTermAsync = ref.watch(activeTermProvider);
     final showRealGwa = ref.watch(showRealGwaProvider);
-    final gwaAsync = showRealGwa ? ref.watch(realGwaProvider) : ref.watch(overallGwaProvider);
-    
+    final gwaAsync = showRealGwa
+        ? ref.watch(realGwaProvider)
+        : ref.watch(overallGwaProvider);
+
     final prefs = ref.watch(preferencesProvider);
     final selectedSystem = ref.watch(activeGradingSystemProvider);
     final userName = prefs.userName;
@@ -73,9 +77,8 @@ class DashboardScreen extends ConsumerWidget {
                         if (userName.isNotEmpty) ...[
                           Text(
                             "Hello, $userName!",
-                            style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.headlineSmall
+                                ?.copyWith(fontWeight: FontWeight.bold),
                             maxLines: 1,
                             overflow: TextOverflow.ellipsis,
                           ),
@@ -94,38 +97,58 @@ class DashboardScreen extends ConsumerWidget {
                           const SizedBox(height: 24),
                         ] else
                           const SizedBox(height: 8),
-                        
+
                         // GWA Indicator
                         Center(
                           child: gwaAsync.when(
                             data: (gwa) {
-                              final systemLabel = GradeDisplayHelper.getSystemLabel(selectedSystem);
-                              final label = showRealGwa ? "Real $systemLabel" : "Projected $systemLabel";
-                              
+                              final systemLabel =
+                                  GradeDisplayHelper.getSystemLabel(
+                                    selectedSystem,
+                                  );
+                              final label = showRealGwa
+                                  ? "Real $systemLabel"
+                                  : "Projected $systemLabel";
+
                               // If no data yet, show placeholder
                               if (gwa == null) {
                                 return GestureDetector(
                                   onTap: () {
-                                  ref.read(showRealGwaProvider.notifier).toggle();
-                                },
+                                    ref
+                                        .read(showRealGwaProvider.notifier)
+                                        .toggle();
+                                  },
                                   child: CircularPercentIndicator(
                                     radius: 70.0,
                                     lineWidth: 12.0,
                                     percent: 0,
                                     center: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
                                       children: [
                                         Text(
-                                          GradeDisplayHelper.getSystemLabel(selectedSystem),
-                                          style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                          GradeDisplayHelper.getSystemLabel(
+                                            selectedSystem,
+                                          ),
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 12,
+                                          ),
                                         ),
                                         const Text(
                                           "--",
-                                          style: TextStyle(fontWeight: FontWeight.bold, fontSize: 28, color: Colors.grey),
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 28,
+                                            color: Colors.grey,
+                                          ),
                                         ),
                                         Text(
                                           label,
-                                          style: const TextStyle(color: Colors.grey, fontSize: 10),
+                                          style: const TextStyle(
+                                            color: Colors.grey,
+                                            fontSize: 10,
+                                          ),
                                         ),
                                       ],
                                     ),
@@ -135,7 +158,7 @@ class DashboardScreen extends ConsumerWidget {
                                   ),
                                 );
                               }
-                              
+
                               // Calculate percentage based on system for visual display
                               double percent;
                               if (selectedSystem == '5Point') {
@@ -148,37 +171,78 @@ class DashboardScreen extends ConsumerWidget {
 
                               return GestureDetector(
                                 onTap: () {
-                                  ref.read(showRealGwaProvider.notifier).toggle();
+                                  ref
+                                      .read(showRealGwaProvider.notifier)
+                                      .toggle();
                                 },
-                                child: CircularPercentIndicator(
-                                  radius: 70.0,
-                                  lineWidth: 12.0,
-                                  percent: percent,
-                                  center: Column(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      Text(
-                                        GradeDisplayHelper.getSystemLabel(selectedSystem),
-                                        style: const TextStyle(color: Colors.grey, fontSize: 12),
+                                child: Column(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    CircularPercentIndicator(
+                                      radius: 70.0,
+                                      lineWidth: 12.0,
+                                      percent: percent,
+                                      center: Column(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            GradeDisplayHelper.getSystemLabel(
+                                              selectedSystem,
+                                            ),
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                          Text(
+                                            selectedSystem == 'US'
+                                                ? GradingSystem.getUSLetter(gwa)
+                                                : gwa.toStringAsFixed(2),
+                                            style: const TextStyle(
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 28,
+                                            ),
+                                          ),
+                                          Text(
+                                            label,
+                                            style: const TextStyle(
+                                              color: Colors.grey,
+                                              fontSize: 10,
+                                            ),
+                                          ),
+                                        ],
                                       ),
-                                      Text(
-                                        selectedSystem == 'US' 
-                                          ? GradingSystem.getUSLetter(gwa)
-                                          : gwa.toStringAsFixed(2),
-                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 28),
+                                      progressColor: Color(
+                                        GradingSystem.getColor(gwa, selectedSystem),
                                       ),
-                                      Text(
-                                        label,
-                                        style: const TextStyle(color: Colors.grey, fontSize: 10),
-                                      ),
-                                    ],
-                                  ),
-                                  progressColor: Color(GradingSystem.getColor(gwa, selectedSystem)),
-                                  backgroundColor: Theme.of(context).brightness == Brightness.dark 
-                                      ? Colors.grey.shade800 
-                                      : Colors.grey.shade200,
-                                  circularStrokeCap: CircularStrokeCap.round,
-                                  animation: true,
+                                      backgroundColor:
+                                          Theme.of(context).brightness ==
+                                              Brightness.dark
+                                          ? Colors.grey.shade800
+                                          : Colors.grey.shade200,
+                                      circularStrokeCap: CircularStrokeCap.round,
+                                      animation: true,
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          PhosphorIcons.arrowsLeftRight(),
+                                          size: 11,
+                                          color: Colors.grey[400],
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          "Tap to switch view",
+                                          style: TextStyle(
+                                            fontSize: 10,
+                                            color: Colors.grey[400],
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ],
                                 ),
                               );
                             },
@@ -197,7 +261,10 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
           ),
-          
+
+          // Semester Stats Section
+          SliverToBoxAdapter(child: _SemesterStatsWidget()),
+
           // Course List Section with Header
           SliverToBoxAdapter(
             child: Padding(
@@ -227,7 +294,7 @@ class DashboardScreen extends ConsumerWidget {
               ),
             ),
           ),
-          
+
           // Course List
           activeTermAsync.when(
             data: (activeTerm) {
@@ -239,11 +306,19 @@ class DashboardScreen extends ConsumerWidget {
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
-                          Icon(PhosphorIcons.calendarBlank(), size: 64, color: Colors.grey[400]),
+                          Icon(
+                            PhosphorIcons.calendarBlank(),
+                            size: 64,
+                            color: Colors.grey[400],
+                          ),
                           const SizedBox(height: 16),
                           Text(
                             "No active term",
-                            style: TextStyle(fontSize: 18, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                            style: TextStyle(
+                              fontSize: 18,
+                              color: Colors.grey[700],
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                           const SizedBox(height: 8),
                           Text(
@@ -270,11 +345,19 @@ class DashboardScreen extends ConsumerWidget {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(PhosphorIcons.books(), size: 64, color: Colors.grey[400]),
+                              Icon(
+                                PhosphorIcons.books(),
+                                size: 64,
+                                color: Colors.grey[400],
+                              ),
                               const SizedBox(height: 16),
                               Text(
                                 "No courses yet",
-                                style: TextStyle(fontSize: 18, color: Colors.grey[700], fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  color: Colors.grey[700],
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               const SizedBox(height: 8),
                               Text(
@@ -288,7 +371,7 @@ class DashboardScreen extends ConsumerWidget {
                       ),
                     );
                   }
-                  
+
                   return SliverPadding(
                     padding: EdgeInsets.fromLTRB(
                       MediaQuery.of(context).size.width * 0.06,
@@ -307,7 +390,10 @@ class DashboardScreen extends ConsumerWidget {
                 error: (err, stack) => SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.all(24),
-                    child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+                    child: Text(
+                      'Error: $err',
+                      style: const TextStyle(color: Colors.red),
+                    ),
                   ),
                 ),
                 loading: () => const SliverFillRemaining(
@@ -318,7 +404,10 @@ class DashboardScreen extends ConsumerWidget {
             error: (err, stack) => SliverToBoxAdapter(
               child: Padding(
                 padding: const EdgeInsets.all(24),
-                child: Text('Error: $err', style: const TextStyle(color: Colors.red)),
+                child: Text(
+                  'Error: $err',
+                  style: const TextStyle(color: Colors.red),
+                ),
               ),
             ),
             loading: () => const SliverFillRemaining(
@@ -333,21 +422,19 @@ class DashboardScreen extends ConsumerWidget {
 
 class _CourseCard extends ConsumerWidget {
   final Course course;
-  
+
   const _CourseCard({required this.course});
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final selectedSystem = ref.watch(activeGradingSystemProvider);
     final gradeAsync = ref.watch(courseStandingProvider(course.id));
-    
+
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       elevation: 2,
       shadowColor: Colors.black.withOpacity(0.08),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
       child: InkWell(
         onTap: () {
           Navigator.push(
@@ -367,12 +454,14 @@ class _CourseCard extends ConsumerWidget {
                 width: 4,
                 height: 55,
                 decoration: BoxDecoration(
-                  color: Color(int.parse(course.colorHex.replaceFirst('#', '0xFF'))),
+                  color: Color(
+                    int.parse(course.colorHex.replaceFirst('#', '0xFF')),
+                  ),
                   borderRadius: BorderRadius.circular(2),
                 ),
               ),
               const SizedBox(width: 16),
-              
+
               // Course info
               Expanded(
                 child: Column(
@@ -390,17 +479,18 @@ class _CourseCard extends ConsumerWidget {
                     const SizedBox(height: 2),
                     Text(
                       course.name,
-                      style: TextStyle(
-                        color: Colors.grey[600],
-                        fontSize: 13,
-                      ),
+                      style: TextStyle(color: Colors.grey[600], fontSize: 13),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 8),
                     Row(
                       children: [
-                        Icon(PhosphorIcons.target(), size: 13, color: Colors.grey[500]),
+                        Icon(
+                          PhosphorIcons.target(),
+                          size: 13,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           "${course.targetGwa}",
@@ -410,7 +500,11 @@ class _CourseCard extends ConsumerWidget {
                           ),
                         ),
                         const SizedBox(width: 12),
-                        Icon(PhosphorIcons.clock(), size: 13, color: Colors.grey[500]),
+                        Icon(
+                          PhosphorIcons.clock(),
+                          size: 13,
+                          color: Colors.grey[500],
+                        ),
                         const SizedBox(width: 4),
                         Text(
                           "${course.units}u",
@@ -424,7 +518,7 @@ class _CourseCard extends ConsumerWidget {
                   ],
                 ),
               ),
-              
+
               const SizedBox(width: 12),
               // Current grade badge
               gradeAsync.when(
@@ -432,9 +526,13 @@ class _CourseCard extends ConsumerWidget {
                   // If not enough data to show meaningful grade, show placeholder with context
                   if (!standing.hasEnoughData) {
                     return Tooltip(
-                      message: "Only ${(standing.weightGraded * 100).toStringAsFixed(0)}% graded",
+                      message:
+                          "Only ${(standing.weightGraded * 100).toStringAsFixed(0)}% graded",
                       child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
                         decoration: BoxDecoration(
                           color: Colors.grey[200],
                           borderRadius: BorderRadius.circular(8),
@@ -462,43 +560,59 @@ class _CourseCard extends ConsumerWidget {
                       ),
                     );
                   }
-                  
-                  final grade = GradeDisplayHelper.formatGrade(
-                    standing.realPercentage,
-                    selectedSystem,
-                  );
-                  return Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(
-                      color: Color(GradeDisplayHelper.getGradeColorForSystem(
-                        standing.realPercentage,
-                        selectedSystem,
-                      )).withOpacity(0.15),
-                      borderRadius: BorderRadius.circular(8),
+
+                  final db = ref.watch(databaseProvider);
+                  return FutureBuilder<String>(
+                    future: GradeDisplayHelper.formatGradeAsync(
+                      standing.realPercentage,
+                      selectedSystem,
+                      db,
                     ),
-                    child: Column(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Text(
-                          grade,
-                          style: TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 18,
-                            color: Color(GradeDisplayHelper.getGradeColorForSystem(
+                    builder: (context, snapshot) {
+                      final grade =
+                          snapshot.data ??
+                          standing.realPercentage.toStringAsFixed(2);
+                      return Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Color(
+                            GradeDisplayHelper.getGradeColorForSystem(
                               standing.realPercentage,
                               selectedSystem,
-                            )),
-                          ),
+                            ),
+                          ).withOpacity(0.15),
+                          borderRadius: BorderRadius.circular(8),
                         ),
-                        Text(
-                          "Grade",
-                          style: TextStyle(
-                            fontSize: 9,
-                            color: Colors.grey[600],
-                          ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              grade,
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: Color(
+                                  GradeDisplayHelper.getGradeColorForSystem(
+                                    standing.realPercentage,
+                                    selectedSystem,
+                                  ),
+                                ),
+                              ),
+                            ),
+                            Text(
+                              "Grade",
+                              style: TextStyle(
+                                fontSize: 9,
+                                color: Colors.grey[600],
+                              ),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
+                      );
+                    },
                   );
                 },
                 loading: () => const SizedBox(
@@ -515,6 +629,231 @@ class _CourseCard extends ConsumerWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+// Semester Stats Widget
+class _SemesterStatsWidget extends ConsumerWidget {
+  @override
+  Widget build(BuildContext context, WidgetRef ref) {
+    final statsAsync = ref.watch(semesterStatsProvider);
+
+    return statsAsync.when(
+      data: (stats) {
+        // Don't show anything if no active term or no courses
+        if (stats == null || !stats.hasData) {
+          return const SizedBox.shrink();
+        }
+
+        // Calculate coverage percentage (how much of semester is graded)
+        final coveragePercent = stats.courseCount > 0
+            ? (stats.coursesWithGrades / stats.courseCount)
+            : 0.0;
+        final coverageDisplay = (coveragePercent * 100).toStringAsFixed(0);
+
+        // Determine confidence level and messaging
+        final bool isHighConfidence = coveragePercent >= 0.7;
+        final bool isMediumConfidence = coveragePercent >= 0.4;
+        final int pendingCount = stats.coursesWithoutGrades;
+
+        // Confidence messaging
+        String confidenceLabel;
+        Color confidenceColor;
+        if (isHighConfidence) {
+          confidenceLabel = "High confidence";
+          confidenceColor = Colors.green;
+        } else if (isMediumConfidence) {
+          confidenceLabel = "Building confidence";
+          confidenceColor = Colors.orange;
+        } else {
+          confidenceLabel = "Early projection";
+          confidenceColor = Colors.grey;
+        }
+
+        return Container(
+          margin: EdgeInsets.fromLTRB(
+            MediaQuery.of(context).size.width * 0.06,
+            12,
+            MediaQuery.of(context).size.width * 0.06,
+            4,
+          ),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Theme.of(context).cardColor.withOpacity(0.5),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: Theme.of(context).dividerColor.withOpacity(0.2),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Primary: Progress/Coverage Metric
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              "$coverageDisplay%",
+                              style: TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                                color: confidenceColor,
+                                height: 1,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              "graded",
+                              style: TextStyle(
+                                fontSize: 13,
+                                color: Theme.of(
+                                  context,
+                                ).textTheme.bodySmall?.color,
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        // Progress bar
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(2),
+                          child: LinearProgressIndicator(
+                            value: coveragePercent,
+                            backgroundColor: Theme.of(
+                              context,
+                            ).dividerColor.withOpacity(0.1),
+                            valueColor: AlwaysStoppedAnimation<Color>(
+                              confidenceColor.withOpacity(0.7),
+                            ),
+                            minHeight: 3,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  // Confidence badge
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 10,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: confidenceColor.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: confidenceColor.withOpacity(0.2),
+                        width: 1,
+                      ),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isHighConfidence
+                              ? PhosphorIcons.checkCircle()
+                              : PhosphorIcons.clockCounterClockwise(),
+                          size: 14,
+                          color: confidenceColor,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          confidenceLabel,
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: confidenceColor,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+
+              const SizedBox(height: 10),
+
+              // Secondary: Compact context info
+              Row(
+                children: [
+                  Icon(
+                    PhosphorIcons.books(),
+                    size: 13,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${stats.courseCount} courses",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Icon(
+                    PhosphorIcons.graduationCap(),
+                    size: 13,
+                    color: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.color?.withOpacity(0.6),
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    "${stats.totalUnits.toStringAsFixed(1)} units",
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: Theme.of(context).textTheme.bodySmall?.color,
+                    ),
+                  ),
+                  const Spacer(),
+                  // Action prompt
+                  if (pendingCount > 0)
+                    Text(
+                      "$pendingCount pending",
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: Theme.of(
+                          context,
+                        ).colorScheme.secondary.withOpacity(0.8),
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                ],
+              ),
+
+              // Tertiary: Subtle scroll hint (only when there are courses)
+              if (stats.courseCount > 0) ...[
+                const SizedBox(height: 8),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      PhosphorIcons.caretDown(),
+                      size: 12,
+                      color: Theme.of(context).dividerColor.withOpacity(0.5),
+                    ),
+                  ],
+                ),
+              ],
+            ],
+          ),
+        );
+      },
+      loading: () => const SizedBox.shrink(),
+      error: (error, stack) {
+        // Silent fail - don't show error UI for stats
+        debugPrint('Error loading semester stats: $error');
+        return const SizedBox.shrink();
+      },
     );
   }
 }
