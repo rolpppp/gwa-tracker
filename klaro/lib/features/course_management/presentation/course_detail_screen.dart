@@ -176,7 +176,7 @@ class CourseDetailScreen extends ConsumerWidget {
                 MaterialPageRoute(builder: (_) => SyllabusUploadScreen(courseId: course.id))
               );
             },
-            icon: const Icon(Icons.auto_awesome), // Sparkles icon
+            icon: Icon(PhosphorIcons.sparkle()),
             label: const Text("Import via AI Syllabus"),
           ),
           
@@ -277,44 +277,52 @@ class _CourseHeader extends ConsumerWidget {
                   // Check if we have goals active (Real != Projected)
                   bool hasGoals = standing.realPercentage != standing.projectedPercentage;
                   
-                  // Convert grades to selected system
-                  final projectedGrade = GradeDisplayHelper.formatGrade(standing.projectedPercentage, selectedSystem);
-                  final realGrade = GradeDisplayHelper.formatGrade(standing.realPercentage, selectedSystem);
+                  // Get database for async conversion
+                  final db = ref.watch(databaseProvider);
 
-                  return Column(
-                    crossAxisAlignment: CrossAxisAlignment.end,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          Text(
-                            hasGoals ? "Projected Grade" : "Current Grade", 
-                            style: const TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                          if (hasGoals) ...[
-                            const SizedBox(width: 4),
-                            const Icon(Icons.flag_circle, color: Colors.purpleAccent, size: 14),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
+                  return FutureBuilder<List<String>>(
+                    future: Future.wait([
+                      GradeDisplayHelper.formatGradeAsync(standing.projectedPercentage, selectedSystem, db),
+                      GradeDisplayHelper.formatGradeAsync(standing.realPercentage, selectedSystem, db),
+                    ]),
+                    builder: (context, snapshot) {
+                      final projectedGrade = snapshot.data?[0] ?? standing.projectedPercentage.toStringAsFixed(2);
+                      final realGrade = snapshot.data?[1] ?? standing.realPercentage.toStringAsFixed(2);
                       
-                      // If we have goals, show "Projected" big and "Real" small
-                      if (hasGoals) ...[
-                        GestureDetector(
-                          onTap: () {
-                            // Show percentage tooltip
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text("Grade Breakdown"),
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.end,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(
+                                hasGoals ? "Projected Grade" : "Current Grade", 
+                                style: const TextStyle(color: Colors.grey, fontSize: 12),
+                              ),
+                              if (hasGoals) ...[
+                                const SizedBox(width: 4),
+                                Icon(PhosphorIcons.flag(), color: Theme.of(context).colorScheme.secondary, size: 14),
+                              ],
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          
+                          // If we have goals, show "Projected" big and "Real" small
+                          if (hasGoals) ...[
+                            GestureDetector(
+                              onTap: () {
+                                // Show percentage tooltip
+                                showDialog(
+                                  context: context,
+                                  builder: (ctx) => AlertDialog(
+                                    title: const Text("Grade Breakdown"),
                                 content: Column(
                                   mainAxisSize: MainAxisSize.min,
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
                                       "Projected: ${standing.projectedPercentage.toStringAsFixed(1)}% ($projectedGrade)",
-                                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Colors.purpleAccent),
+                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
                                     ),
                                     const SizedBox(height: 8),
                                     Text(
@@ -335,9 +343,9 @@ class _CourseHeader extends ConsumerWidget {
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
-                              color: Colors.purpleAccent.withOpacity(0.1),
+                              color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Colors.purpleAccent.withOpacity(0.3)),
+                              border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -347,10 +355,10 @@ class _CourseHeader extends ConsumerWidget {
                                   children: [
                                     Text(
                                       projectedGrade,
-                                      style: const TextStyle(
-                                        fontSize: 28, 
-                                        fontWeight: FontWeight.bold, 
-                                        color: Colors.purpleAccent,
+                                      style: TextStyle(
+                                        fontSize: 28,
+                                        fontWeight: FontWeight.bold,
+                                        color: Theme.of(context).colorScheme.secondary,
                                       ),
                                     ),
                                     Text(
@@ -364,7 +372,7 @@ class _CourseHeader extends ConsumerWidget {
                                   ],
                                 ),
                                 const SizedBox(width: 6),
-                                Icon(Icons.info_outline, size: 16, color: Colors.purpleAccent.withOpacity(0.6)),
+                                Icon(PhosphorIcons.info(), size: 16, color: Theme.of(context).colorScheme.secondary.withOpacity(0.6)),
                               ],
                             ),
                           ),
@@ -404,18 +412,20 @@ class _CourseHeader extends ConsumerWidget {
                               ),
                               const SizedBox(width: 6),
                               Icon(
-                                Icons.info_outline, 
-                                size: 16, 
+                                PhosphorIcons.info(),
+                                size: 16,
                                 color: Colors.grey.shade400,
                               ),
                             ],
                           ),
                         ),
                       ],
-                    ],
-                  );
-                },
-                loading: () => const _StatItem(label: "Current", value: "..."),
+                      ],
+                    );
+                  },
+                );
+              },
+              loading: () => const _StatItem(label: "Current", value: "..."),
                 error: (_,__) => const _StatItem(label: "Current", value: "Err"),
               ),
             ],
@@ -440,7 +450,7 @@ class _CourseHeader extends ConsumerWidget {
                       child: Row(
                         children: [
                           Icon(
-                            standing.hasEnoughData ? Icons.info_outline : Icons.warning_amber_rounded,
+                            standing.hasEnoughData ? PhosphorIcons.info() : PhosphorIcons.warning(),
                             size: 18,
                             color: standing.hasEnoughData ? Colors.blue[700] : Colors.orange[700],
                           ),
@@ -503,7 +513,6 @@ class _CourseHeader extends ConsumerWidget {
                           ),
                           builder: (ctx) => ComponentSimulatorModal(
                             courseId: course.id,
-                            currentGrade: standingValue.realGrade,
                             currentPercentage: standingValue.realPercentage,
                           ),
                         );
@@ -516,8 +525,8 @@ class _CourseHeader extends ConsumerWidget {
                         mainAxisAlignment: MainAxisAlignment.center,
                         children: [
                           Icon(
-                            Icons.trending_up, 
-                            color: isDark ? Colors.purple.shade200 : Colors.purple.shade700
+                            PhosphorIcons.trendUp(),
+                            color: isDark ? Colors.purple.shade200 : Colors.purple.shade700,
                           ),
                           const SizedBox(width: 8),
                           Text(
@@ -644,32 +653,32 @@ class _GradingComponentTile extends ConsumerWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               // Show expand/collapse icon
-              const Icon(Icons.expand_more),
+              Icon(PhosphorIcons.caretDown()),
               const SizedBox(width: 8),
               // Three-dot menu
               PopupMenuButton<String>(
-                icon: const Icon(Icons.more_vert, size: 20),
+                icon: Icon(PhosphorIcons.dotsThreeVertical(), size: 20),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 itemBuilder: (context) => [
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'edit',
                     child: Row(
                       children: [
-                        Icon(Icons.edit, size: 18, color: Colors.blue),
-                        SizedBox(width: 12),
-                        Text('Edit Component'),
+                        Icon(PhosphorIcons.pencil(), size: 18, color: Colors.blue),
+                        const SizedBox(width: 12),
+                        const Text('Edit Component'),
                       ],
                     ),
                   ),
-                  const PopupMenuItem(
+                  PopupMenuItem(
                     value: 'delete',
                     child: Row(
                       children: [
-                        Icon(Icons.delete, size: 18, color: Colors.red),
-                        SizedBox(width: 12),
-                        Text('Delete Component', style: TextStyle(color: Colors.red)),
+                        Icon(PhosphorIcons.trash(), size: 18, color: Colors.red),
+                        const SizedBox(width: 12),
+                        const Text('Delete Component', style: TextStyle(color: Colors.red)),
                       ],
                     ),
                   ),
@@ -711,7 +720,7 @@ class _GradingComponentTile extends ConsumerWidget {
                     children: [
                       TextSpan(
                         text: "${projectedScore.toStringAsFixed(1)}%",
-                        style: const TextStyle(color: Colors.purpleAccent, fontWeight: FontWeight.bold),
+                        style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold),
                       ),
                       TextSpan(
                         text: " (Real: ${realScore.toStringAsFixed(1)}%) ",
@@ -740,7 +749,7 @@ class _GradingComponentTile extends ConsumerWidget {
                   ...assessments.map((a) => ListTile(
                     // VISUAL DISTINCTION FOR GOALS
                     tileColor: a.isGoal ? Colors.purple.withOpacity(0.05) : null,
-                    leading: a.isGoal ? const Icon(Icons.flag_circle_outlined, color: Colors.purple) : null,
+                    leading: a.isGoal ? Icon(PhosphorIcons.flag(), color: Colors.purple) : null,
                     
                     title: Text(
                       a.name,
@@ -762,7 +771,7 @@ class _GradingComponentTile extends ConsumerWidget {
                         ),
                         const SizedBox(width: 8),
                         IconButton(
-                          icon: const Icon(Icons.delete, size: 18, color: Colors.red),
+                          icon: Icon(PhosphorIcons.trash(), size: 18, color: Colors.red),
                           onPressed: () => _deleteAssessment(context, ref, a),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
@@ -780,7 +789,7 @@ class _GradingComponentTile extends ConsumerWidget {
                     },
                   )),
                   ListTile(
-                    leading: Icon(Icons.add, color: Theme.of(context).colorScheme.secondary),
+                    leading: Icon(PhosphorIcons.plus(), color: Theme.of(context).colorScheme.secondary),
                     title: Text("Add Score", style: TextStyle(color: Theme.of(context).colorScheme.secondary, fontWeight: FontWeight.bold)),
                     onTap: () {
                       // OPEN MODAL: Add Assessment

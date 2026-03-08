@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-import 'package:klaro/core/logic/grading_system.dart';
 import 'package:klaro/core/services/database.dart';
 import 'package:klaro/core/logic/grade_display_helper.dart';
 import 'package:klaro/core/services/preferences_service.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ComponentSimulatorModal extends ConsumerStatefulWidget {
   final int courseId;
-  final double currentGrade;
   final double currentPercentage;
 
   const ComponentSimulatorModal({
     super.key,
     required this.courseId,
-    required this.currentGrade,
     required this.currentPercentage,
   });
 
   @override
-  ConsumerState<ComponentSimulatorModal> createState() => _ComponentSimulatorModalState();
+  ConsumerState<ComponentSimulatorModal> createState() =>
+      _ComponentSimulatorModalState();
 }
 
-class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModal> {
+class _ComponentSimulatorModalState
+    extends ConsumerState<ComponentSimulatorModal> {
   List<GradingComponent> _components = [];
   Map<int, double> _simulatedScores = {}; // componentId -> simulated percentage
   bool _isLoading = true;
@@ -34,9 +34,10 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
 
   Future<void> _loadComponents() async {
     final db = ref.read(databaseProvider);
-    final components = await (db.select(db.gradingComponents)
-      ..where((c) => c.courseId.equals(widget.courseId))).get();
-    
+    final components = await (db.select(
+      db.gradingComponents,
+    )..where((c) => c.courseId.equals(widget.courseId))).get();
+
     setState(() {
       _components = components;
       // Initialize all components with 85% default
@@ -45,24 +46,6 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
       }
       _isLoading = false;
     });
-  }
-
-  double _calculateProjectedGrade() {
-    if (_components.isEmpty) return widget.currentGrade;
-
-    double totalWeightedScore = 0.0;
-    double totalWeight = 0.0;
-
-    for (var component in _components) {
-      final simulatedScore = _simulatedScores[component.id] ?? 85.0;
-      totalWeightedScore += simulatedScore * component.weightPercent;
-      totalWeight += component.weightPercent;
-    }
-
-    if (totalWeight == 0) return widget.currentGrade;
-
-    final projectedPercentage = totalWeightedScore / totalWeight;
-    return GradingSystem.convertToUPGrade(projectedPercentage);
   }
 
   double _calculateProjectedPercentage() {
@@ -105,7 +88,7 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
               ),
             ),
             const SizedBox(height: 24),
-            Icon(Icons.science_outlined, size: 64, color: Colors.grey[400]),
+            Icon(PhosphorIcons.flask(), size: 64, color: Colors.grey[400]),
             const SizedBox(height: 16),
             const Text(
               "No Components Yet",
@@ -123,236 +106,323 @@ class _ComponentSimulatorModalState extends ConsumerState<ComponentSimulatorModa
       );
     }
 
-    final projectedGrade = _calculateProjectedGrade();
     final projectedPercentage = _calculateProjectedPercentage();
     final selectedSystem = ref.watch(preferencesProvider).selectedGradingSystem;
-    final displayGrade = GradeDisplayHelper.formatGrade(projectedPercentage, selectedSystem);
-    
-    final isImproving = projectedGrade < widget.currentGrade;
-    final isDeclining = projectedGrade > widget.currentGrade;
+    final db = ref.watch(databaseProvider);
 
-    return Container(
-      padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
-      constraints: BoxConstraints(
-        maxHeight: MediaQuery.of(context).size.height * 0.85,
+    // Compare raw percentages — higher % = better, regardless of grading system
+    final isImproving = projectedPercentage > widget.currentPercentage;
+    final isDeclining = projectedPercentage < widget.currentPercentage;
+
+    return FutureBuilder<String>(
+      future: GradeDisplayHelper.formatGradeAsync(
+        projectedPercentage,
+        selectedSystem,
+        db,
       ),
-      decoration: BoxDecoration(
-        color: Theme.of(context).scaffoldBackgroundColor,
-        borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Handle
-          Container(
-            width: 40,
-            height: 4,
-            decoration: BoxDecoration(
-              color: Theme.of(context).dividerColor,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-          const SizedBox(height: 20),
+      builder: (context, gradeSnapshot) {
+        final displayGrade =
+            gradeSnapshot.data ?? projectedPercentage.toStringAsFixed(2);
 
-          // Title
-          Row(
+        return Container(
+          padding: const EdgeInsets.fromLTRB(24, 16, 24, 24),
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(context).size.height * 0.85,
+          ),
+          decoration: BoxDecoration(
+            color: Theme.of(context).scaffoldBackgroundColor,
+            borderRadius: const BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(Icons.science, color: Theme.of(context).primaryColor),
-              const SizedBox(width: 8),
-              Text(
-                "Grade Simulator",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Theme.of(context).textTheme.bodyLarge?.color),
+              // Handle
+              Container(
+                width: 40,
+                height: 4,
+                decoration: BoxDecoration(
+                  color: Theme.of(context).dividerColor,
+                  borderRadius: BorderRadius.circular(2),
+                ),
               ),
-            ],
-          ),
-          const SizedBox(height: 4),
-          Text(
-            "Simulate component scores to see projected grade",
-            style: TextStyle(color: Theme.of(context).textTheme.bodySmall?.color, fontSize: 13),
-          ),
-          const SizedBox(height: 24),
+              const SizedBox(height: 20),
 
-          // Current vs Projected Comparison
-          Row(
-            children: [
-              Expanded(
-                child: _GradeCard(
-                  label: "Current",
-                  grade: GradeDisplayHelper.formatGrade(widget.currentPercentage, selectedSystem),
-                  percentage: widget.currentPercentage,
-                  color: Color(GradeDisplayHelper.getGradeColorForSystem(widget.currentPercentage, selectedSystem)),
-                ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 12),
-                child: Icon(
-                  Icons.arrow_forward,
-                  color: Colors.grey[400],
-                  size: 24,
-                ),
-              ),
-              Expanded(
-                child: _GradeCard(
-                  label: "Simulated",
-                  grade: displayGrade,
-                  percentage: projectedPercentage,
-                  color: Color(GradeDisplayHelper.getGradeColorForSystem(projectedPercentage, selectedSystem)),
-                  changeIcon: isImproving
-                      ? Icons.trending_up
-                      : (isDeclining ? Icons.trending_down : Icons.trending_flat),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 24),
-
-          // Component Sliders
-          Flexible(
-            child: SingleChildScrollView(
-              child: Column(
+              // Title
+              Row(
                 children: [
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: Theme.of(context).cardColor,
-                      borderRadius: BorderRadius.circular(16),
-                      border: Border.all(color: Theme.of(context).dividerColor),
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.tune, size: 18, color: Theme.of(context).textTheme.bodyMedium?.color),
-                            const SizedBox(width: 8),
-                            Text(
-                              "Adjust Component Scores",
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14,
-                                color: Theme.of(context).textTheme.bodyLarge?.color,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 16),
-                        ..._components.map((component) {
-                          final score = _simulatedScores[component.id] ?? 85.0;
-                          return Padding(
-                            padding: const EdgeInsets.only(bottom: 20),
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Expanded(
-                                      child: Text(
-                                        component.name,
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.w600,
-                                          fontSize: 14,
-                                          color: Theme.of(context).textTheme.bodyLarge?.color,
-                                        ),
-                                        maxLines: 1,
-                                        overflow: TextOverflow.ellipsis,
-                                      ),
-                                    ),
-                                    const SizedBox(width: 8),
-                                    Container(
-                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                      decoration: BoxDecoration(
-                                        color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                        borderRadius: BorderRadius.circular(6),
-                                      ),
-                                      child: Text(
-                                        "${score.toStringAsFixed(0)}%",
-                                        style: TextStyle(
-                                          fontWeight: FontWeight.bold,
-                                          fontSize: 13,
-                                          color: Theme.of(context).primaryColor,
-                                        ),
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                const SizedBox(height: 4),
-                                Text(
-                                  "Weight: ${(component.weightPercent * 100).toStringAsFixed(0)}%",
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    color: Theme.of(context).textTheme.bodySmall?.color,
-                                  ),
-                                ),
-                                const SizedBox(height: 8),
-                                SliderTheme(
-                                  data: SliderThemeData(
-                                    trackHeight: 6,
-                                    thumbShape: const RoundSliderThumbShape(enabledThumbRadius: 8),
-                                    overlayShape: const RoundSliderOverlayShape(overlayRadius: 16),
-                                    activeTrackColor: Theme.of(context).primaryColor,
-                                    inactiveTrackColor: Theme.of(context).disabledColor,
-                                    thumbColor: Theme.of(context).primaryColor,
-                                    overlayColor: Theme.of(context).primaryColor.withOpacity(0.2),
-                                  ),
-                                  child: Slider(
-                                    value: score,
-                                    min: 0,
-                                    max: 100,
-                                    divisions: 100,
-                                    onChanged: (value) {
-                                      setState(() {
-                                        _simulatedScores[component.id] = value;
-                                      });
-                                    },
-                                  ),
-                                ),
-                              ],
-                            ),
-                          );
-                        }).toList(),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Quick presets
+                  Icon(PhosphorIcons.flask(PhosphorIconsStyle.fill), color: Theme.of(context).primaryColor),
+                  const SizedBox(width: 8),
                   Text(
-                    "Quick Presets",
+                    "Grade Simulator",
                     style: TextStyle(
+                      fontSize: 22,
                       fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                      color: Theme.of(context).textTheme.bodyMedium?.color,
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                     ),
-                  ),
-                  const SizedBox(height: 8),
-                  Wrap(
-                    spacing: 8,
-                    children: [
-                      _PresetButton(
-                        label: "Perfect (100%)",
-                        onTap: () => _setAllScores(100),
-                      ),
-                      _PresetButton(
-                        label: "Excellent (95%)",
-                        onTap: () => _setAllScores(95),
-                      ),
-                      _PresetButton(
-                        label: "Good (85%)",
-                        onTap: () => _setAllScores(85),
-                      ),
-                      _PresetButton(
-                        label: "Average (75%)",
-                        onTap: () => _setAllScores(75),
-                      ),
-                    ],
                   ),
                 ],
               ),
-            ),
+              const SizedBox(height: 4),
+              Text(
+                "Simulate component scores to see projected grade",
+                style: TextStyle(
+                  color: Theme.of(context).textTheme.bodySmall?.color,
+                  fontSize: 13,
+                ),
+              ),
+              const SizedBox(height: 24),
+
+              // Current vs Projected Comparison
+              Row(
+                children: [
+                  Expanded(
+                    child: FutureBuilder<String>(
+                      future: GradeDisplayHelper.formatGradeAsync(
+                        widget.currentPercentage,
+                        selectedSystem,
+                        db,
+                      ),
+                      builder: (context, snapshot) {
+                        return _GradeCard(
+                          label: "Current",
+                          grade:
+                              snapshot.data ??
+                              widget.currentPercentage.toStringAsFixed(2),
+                          percentage: widget.currentPercentage,
+                          color: Color(
+                            GradeDisplayHelper.getGradeColorForSystem(
+                              widget.currentPercentage,
+                              selectedSystem,
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Icon(
+                      PhosphorIcons.arrowRight(),
+                      color: Colors.grey[400],
+                      size: 24,
+                    ),
+                  ),
+                  Expanded(
+                    child: _GradeCard(
+                      label: "Simulated",
+                      grade: displayGrade,
+                      percentage: projectedPercentage,
+                      color: Color(
+                        GradeDisplayHelper.getGradeColorForSystem(
+                          projectedPercentage,
+                          selectedSystem,
+                        ),
+                      ),
+                      changeIcon: isImproving
+                          ? PhosphorIcons.trendUp()
+                          : (isDeclining
+                                ? PhosphorIcons.trendDown()
+                                : PhosphorIcons.minus()),
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 24),
+
+              // Component Sliders
+              Flexible(
+                child: Scrollbar(
+                  thumbVisibility: true,
+                  child: SingleChildScrollView(
+                    child: Column(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: Theme.of(context).cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            border: Border.all(
+                              color: Theme.of(context).dividerColor,
+                            ),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  Icon(
+                                    PhosphorIcons.sliders(),
+                                    size: 18,
+                                    color: Theme.of(
+                                      context,
+                                    ).textTheme.bodyMedium?.color,
+                                  ),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    "Adjust Component Scores",
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      color: Theme.of(
+                                        context,
+                                      ).textTheme.bodyLarge?.color,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 16),
+                              ..._components.map((component) {
+                                final score =
+                                    _simulatedScores[component.id] ?? 85.0;
+                                return Padding(
+                                  padding: const EdgeInsets.only(bottom: 20),
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Row(
+                                        mainAxisAlignment:
+                                            MainAxisAlignment.spaceBetween,
+                                        children: [
+                                          Expanded(
+                                            child: Text(
+                                              component.name,
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.w600,
+                                                fontSize: 14,
+                                                color: Theme.of(
+                                                  context,
+                                                ).textTheme.bodyLarge?.color,
+                                              ),
+                                              maxLines: 1,
+                                              overflow: TextOverflow.ellipsis,
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 8,
+                                              vertical: 4,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: Theme.of(
+                                                context,
+                                              ).primaryColor.withOpacity(0.1),
+                                              borderRadius:
+                                                  BorderRadius.circular(6),
+                                            ),
+                                            child: Text(
+                                              "${score.toStringAsFixed(0)}%",
+                                              style: TextStyle(
+                                                fontWeight: FontWeight.bold,
+                                                fontSize: 13,
+                                                color: Theme.of(
+                                                  context,
+                                                ).primaryColor,
+                                              ),
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        "Weight: ${(component.weightPercent * 100).toStringAsFixed(0)}%",
+                                        style: TextStyle(
+                                          fontSize: 11,
+                                          color: Theme.of(
+                                            context,
+                                          ).textTheme.bodySmall?.color,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 8),
+                                      SliderTheme(
+                                        data: SliderThemeData(
+                                          trackHeight: 6,
+                                          thumbShape:
+                                              const RoundSliderThumbShape(
+                                                enabledThumbRadius: 8,
+                                              ),
+                                          overlayShape:
+                                              const RoundSliderOverlayShape(
+                                                overlayRadius: 16,
+                                              ),
+                                          activeTrackColor: Theme.of(
+                                            context,
+                                          ).primaryColor,
+                                          inactiveTrackColor: Theme.of(
+                                            context,
+                                          ).disabledColor,
+                                          thumbColor: Theme.of(
+                                            context,
+                                          ).primaryColor,
+                                          overlayColor: Theme.of(
+                                            context,
+                                          ).primaryColor.withOpacity(0.2),
+                                        ),
+                                        child: Slider(
+                                          value: score,
+                                          min: 0,
+                                          max: 100,
+                                          divisions: 100,
+                                          onChanged: (value) {
+                                            setState(() {
+                                              _simulatedScores[component.id] =
+                                                  value;
+                                            });
+                                          },
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                );
+                              }).toList(),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: 16),
+
+                        // Quick presets
+                        Text(
+                          "Quick Presets",
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                            color: Theme.of(
+                              context,
+                            ).textTheme.bodyMedium?.color,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Wrap(
+                          spacing: 8,
+                          children: [
+                            _PresetButton(
+                              label: "Perfect (100%)",
+                              onTap: () => _setAllScores(100),
+                            ),
+                            _PresetButton(
+                              label: "Excellent (95%)",
+                              onTap: () => _setAllScores(95),
+                            ),
+                            _PresetButton(
+                              label: "Good (85%)",
+                              onTap: () => _setAllScores(85),
+                            ),
+                            _PresetButton(
+                              label: "Average (75%)",
+                              onTap: () => _setAllScores(75),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -370,7 +440,7 @@ class _GradeCard extends StatelessWidget {
   final String grade;
   final double percentage;
   final Color color;
-  final IconData? changeIcon;
+  final PhosphorIconData? changeIcon;
 
   const _GradeCard({
     required this.label,
@@ -419,10 +489,7 @@ class _GradeCard extends StatelessWidget {
           ),
           Text(
             "${percentage.toStringAsFixed(1)}%",
-            style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey[600],
-            ),
+            style: TextStyle(fontSize: 11, color: Colors.grey[600]),
           ),
         ],
       ),
@@ -434,10 +501,7 @@ class _PresetButton extends StatelessWidget {
   final String label;
   final VoidCallback onTap;
 
-  const _PresetButton({
-    required this.label,
-    required this.onTap,
-  });
+  const _PresetButton({required this.label, required this.onTap});
 
   @override
   Widget build(BuildContext context) {
@@ -446,9 +510,7 @@ class _PresetButton extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         side: BorderSide(color: Theme.of(context).primaryColor),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
-        ),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       ),
       child: Text(
         label,

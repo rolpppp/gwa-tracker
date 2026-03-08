@@ -123,7 +123,7 @@ class _AddAssessmentModalState extends ConsumerState<AddAssessmentModal> {
           SwitchListTile(
             title: const Text("Is this a Goal?"),
             subtitle: const Text("Mark as a target/hypothetical score"),
-            activeColor: Colors.purpleAccent,
+            activeColor: Theme.of(context).colorScheme.secondary,
             value: _isGoal,
             onChanged: (val) => setState(() => _isGoal = val),
           ),

@@ -28,7 +28,7 @@ class CourseDetailScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new_rounded, color: Colors.black),
+          icon: Icon(PhosphorIcons.arrowLeft(), color: Colors.black),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(course.code, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
@@ -201,7 +201,7 @@ class _GradingComponentTile extends ConsumerWidget {
                   )),
                   // "Add Grade" Button
                   ListTile(
-                    leading: const Icon(Icons.add, size: 18),
+                    leading: Icon(PhosphorIcons.plus(), size: 18),
                     title: const Text("Add Score", style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold)),
                     onTap: () {
                        final db = ref.read(databaseProvider);

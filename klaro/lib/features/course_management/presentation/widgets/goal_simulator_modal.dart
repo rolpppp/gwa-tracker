@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:klaro/core/logic/grading_system.dart';
 import 'package:klaro/features/course_management/logic/course_grade_provider.dart';
+import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class GoalSimulatorModal extends StatefulWidget {
   final CourseStanding currentStanding;
@@ -39,7 +40,7 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
               ),
             ),
             const SizedBox(height: 24),
-            const Icon(Icons.check_circle_outline, size: 64, color: Colors.green),
+            Icon(PhosphorIcons.checkCircle(), size: 64, color: Colors.green),
             const SizedBox(height: 16),
             const Text(
               "All Grades Are In!",
@@ -117,7 +118,7 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 12),
                 child: Icon(
-                  Icons.arrow_forward,
+                  PhosphorIcons.arrowRight(),
                   color: Colors.grey[400],
                   size: 28,
                 ),
@@ -131,8 +132,8 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
                   color: Color(GradingSystem.getGradeColor(projectedGrade)),
                   isHighlight: true,
                   changeIcon: isImproving
-                      ? Icons.trending_up
-                      : (isDeclining ? Icons.trending_down : null),
+                      ? PhosphorIcons.trendUp()
+                      : (isDeclining ? PhosphorIcons.trendDown() : null),
                 ),
               ),
             ],
@@ -235,7 +236,7 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
               child: Row(
                 children: [
                   Icon(
-                    isImproving ? Icons.celebration : Icons.warning_amber,
+                    isImproving ? PhosphorIcons.confetti() : PhosphorIcons.warning(),
                     color: isImproving ? Colors.green : Colors.orange,
                     size: 20,
                   ),
@@ -281,7 +282,7 @@ class _GradeCard extends StatelessWidget {
   final double percentage;
   final Color color;
   final bool isHighlight;
-  final IconData? changeIcon;
+  final PhosphorIconData? changeIcon;
 
   const _GradeCard({
     required this.label,

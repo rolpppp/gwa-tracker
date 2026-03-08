@@ -272,7 +272,8 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? 
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             textCapitalization: TextCapitalization.words,
           ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
@@ -289,7 +290,8 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                 borderRadius: BorderRadius.circular(12),
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: Theme.of(context).inputDecorationTheme.fillColor ?? 
+                  Theme.of(context).colorScheme.surfaceContainerHighest,
             ),
             textCapitalization: TextCapitalization.words,
           ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
@@ -586,8 +588,8 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
             child: ElevatedButton(
               onPressed: _nextPage,
               style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF1A1F36),
-                foregroundColor: Colors.white,
+                backgroundColor: Theme.of(context).colorScheme.primary,
+                foregroundColor: Theme.of(context).colorScheme.onPrimary,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(16),
@@ -598,12 +600,12 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Text(
-                    _currentPage < 2 ? "Continue" : "Get Started",
+                    _currentPage < 3 ? "Continue" : "Get Started",
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
                   const SizedBox(width: 8),
                   Icon(
-                    _currentPage < 2 ? Icons.arrow_forward : Icons.check,
+                    _currentPage < 3 ? PhosphorIcons.arrowRight() : PhosphorIcons.check(),
                     size: 20,
                   ),
                 ],
@@ -626,9 +628,9 @@ class _CustomGradingSystemCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(
-          color: Colors.grey[50],
+          color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           border: Border.all(
-            color: Colors.grey[300]!,
+            color: Theme.of(context).dividerColor.withOpacity(0.3),
             width: 1.5,
             style: BorderStyle.solid,
           ),
@@ -640,7 +642,7 @@ class _CustomGradingSystemCard extends StatelessWidget {
               width: 48,
               height: 48,
               decoration: BoxDecoration(
-                color: Colors.grey[100],
+                color: Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: const Center(
@@ -726,8 +728,8 @@ class _CustomGradingSystemCard extends StatelessWidget {
               ),
             ),
             Icon(
-              Icons.lock_outline,
-              color: Colors.grey[400],
+              PhosphorIcons.lock(),
+              color: Theme.of(context).disabledColor,
               size: 24,
             ),
           ],
@@ -769,11 +771,11 @@ class _GradingSystemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: isSelected 
               ? Theme.of(context).primaryColor.withOpacity(0.08) 
-              : Colors.grey[50],
+              : Theme.of(context).colorScheme.surfaceContainerHighest,
           border: Border.all(
             color: isSelected 
                 ? Theme.of(context).primaryColor 
-                : Colors.grey[200]!,
+                : Theme.of(context).dividerColor.withOpacity(0.5),
             width: isSelected ? 2.5 : 1.5,
           ),
           borderRadius: BorderRadius.circular(20),
@@ -795,7 +797,7 @@ class _GradingSystemCard extends StatelessWidget {
               decoration: BoxDecoration(
                 color: isSelected
                     ? Theme.of(context).primaryColor.withOpacity(0.15)
-                    : Colors.grey[100],
+                    : Theme.of(context).colorScheme.surfaceContainerHigh,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Center(
@@ -821,7 +823,7 @@ class _GradingSystemCard extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.grey[600],
+                      color: Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -834,7 +836,7 @@ class _GradingSystemCard extends StatelessWidget {
                     decoration: BoxDecoration(
                       color: isSelected
                           ? Theme.of(context).primaryColor.withOpacity(0.15)
-                          : Colors.grey[200],
+                          : Theme.of(context).colorScheme.surfaceContainerHigh,
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
@@ -842,7 +844,7 @@ class _GradingSystemCard extends StatelessWidget {
                       style: TextStyle(
                         color: isSelected
                             ? Theme.of(context).primaryColor
-                            : Colors.grey[700],
+                            : Theme.of(context).textTheme.bodyMedium?.color?.withOpacity(0.8),
                         fontSize: 11,
                         fontWeight: FontWeight.w600,
                       ),
@@ -860,9 +862,9 @@ class _GradingSystemCard extends StatelessWidget {
                   color: Theme.of(context).primaryColor,
                   shape: BoxShape.circle,
                 ),
-                child: const Icon(
-                  Icons.check,
-                  color: Colors.white,
+                child: Icon(
+                  PhosphorIcons.check(),
+                  color: Theme.of(context).colorScheme.onPrimary,
                   size: 18,
                 ),
               ),

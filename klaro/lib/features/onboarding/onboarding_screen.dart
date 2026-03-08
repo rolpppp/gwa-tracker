@@ -149,7 +149,7 @@ class _SystemCard extends StatelessWidget {
               ),
             ),
             if (isSelected)
-              Icon(Icons.check_circle, color: Theme.of(context).primaryColor),
+              Icon(PhosphorIcons.checkCircle(), color: Theme.of(context).primaryColor),
           ],
         ),
       ),
