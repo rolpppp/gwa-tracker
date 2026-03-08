@@ -307,9 +307,11 @@ class ContactScreen extends StatelessWidget {
             child: Container(
               padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
               decoration: BoxDecoration(
-                color: Colors.white,
+                color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.grey[200]!),
+                border: Border.all(
+                  color: Theme.of(context).dividerColor.withOpacity(0.2),
+                ),
                 boxShadow: [
                   BoxShadow(
                     color: Colors.black.withOpacity(0.03),
@@ -334,7 +336,7 @@ class ContactScreen extends StatelessWidget {
                     label,
                     style: TextStyle(
                       fontSize: 13,
-                      color: Colors.grey[800],
+                      color: Theme.of(context).textTheme.bodyLarge?.color,
                       fontWeight: FontWeight.w600,
                     ),
                     textAlign: TextAlign.center,
@@ -620,7 +622,7 @@ class ContactScreen extends StatelessWidget {
         actions: [
           TextButton(
             onPressed: () async {
-              await Clipboard.setData(const ClipboardData(text: "09XXXXXXXXX"));
+              await Clipboard.setData(const ClipboardData(text: "09751857056"));
               if (ctx.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
                   const SnackBar(
