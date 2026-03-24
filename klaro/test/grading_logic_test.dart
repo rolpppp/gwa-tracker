@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:klaro/core/logic/grading_system.dart';
+import 'package:klaro/core/logic/grade_display_helper.dart';
 import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 import 'package:klaro/core/services/database.dart';
 
@@ -150,6 +151,28 @@ void main() {
       expect(GradingSystem.get4PointGradeColor(3.0), 0xFF22D3EE); // Good
       expect(GradingSystem.get4PointGradeColor(2.0), 0xFFFACC15); // Warning
       expect(GradingSystem.get4PointGradeColor(0.5), 0xFFEF4444); // Fail
+    });
+    
+    test('Custom system colors use percentage-based logic', () {
+      // Custom systems should use percentage-based color logic in sync mode
+      expect(GradeDisplayHelper.getGradeColorForSystem(90, 'custom_1'), 0xFF4ADE80); // Excellent (>85%)
+      expect(GradeDisplayHelper.getGradeColorForSystem(80, 'custom_1'), 0xFF22D3EE); // Good (75-84%)
+      expect(GradeDisplayHelper.getGradeColorForSystem(65, 'custom_1'), 0xFFFACC15); // Warning (60-74%)
+      expect(GradeDisplayHelper.getGradeColorForSystem(50, 'custom_1'), 0xFFEF4444); // Fail (<60%)
+    });
+    
+    test('Standard system colors work with getGradeColorForSystem', () {
+      // 5Point system (lower is better)
+      expect(GradeDisplayHelper.getGradeColorForSystem(96, '5Point'), 0xFF4ADE80); // 1.0 - Excellent
+      expect(GradeDisplayHelper.getGradeColorForSystem(85, '5Point'), 0xFF22D3EE); // 1.75 - Good
+      expect(GradeDisplayHelper.getGradeColorForSystem(70, '5Point'), 0xFFFACC15); // 2.5 - Warning
+      expect(GradeDisplayHelper.getGradeColorForSystem(55, '5Point'), 0xFFEF4444); // 5.0 - Fail
+      
+      // 4Point system (higher is better)
+      expect(GradeDisplayHelper.getGradeColorForSystem(97, '4Point'), 0xFF4ADE80); // 4.0 - Excellent
+      expect(GradeDisplayHelper.getGradeColorForSystem(89, '4Point'), 0xFF22D3EE); // 3.0 - Good
+      expect(GradeDisplayHelper.getGradeColorForSystem(75, '4Point'), 0xFFFACC15); // 1.5 - Warning
+      expect(GradeDisplayHelper.getGradeColorForSystem(65, '4Point'), 0xFFEF4444); // 0.0 - Fail
     });
   });
   

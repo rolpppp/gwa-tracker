@@ -105,15 +105,59 @@ class GradeDisplayHelper {
   
   /// Returns grade color based on the percentage and system
   static int getGradeColorForSystem(double percentage, String gradingSystem) {
+    // For custom systems, use percentage-based color logic since we can't convert without DB access
+    if (gradingSystem.startsWith('custom_')) {
+      return _getColorFromPercentage(percentage);
+    }
+    
     final grade = _getNumericGrade(percentage, gradingSystem);
     
-    if (gradingSystem == '5Point' || gradingSystem.startsWith('custom_')) {
-      // Lower is better for 5Point and assume custom
+    if (gradingSystem == '5Point') {
+      // Lower is better for 5Point
       return GradingSystem.getGradeColor(grade);
     } else {
       // Higher is better for 4-Point and US
       return GradingSystem.get4PointGradeColor(grade);
     }
+  }
+  
+  /// Async version that properly handles custom systems with database access
+  static Future<int> getGradeColorForSystemAsync(double percentage, String gradingSystem, AppDatabase db) async {
+    if (gradingSystem.startsWith('custom_')) {
+      final systemIdStr = gradingSystem.substring(7);
+      final systemId = int.tryParse(systemIdStr);
+      if (systemId != null) {
+        // Get the custom system to check if higher is better
+        final customSystem = await (db.select(db.customGradingSystems)
+          ..where((s) => s.id.equals(systemId)))
+          .getSingleOrNull();
+        
+        if (customSystem != null) {
+          // Convert percentage to grade using the custom system
+          final scales = await (db.select(db.customGradingScales)
+            ..where((s) => s.systemId.equals(systemId)))
+            .get();
+          final grade = GradingSystem.convertWithCustomSystem(percentage, scales);
+          
+          // Use appropriate color scheme based on isHigherBetter
+          return customSystem.isHigherBetter 
+              ? GradingSystem.get4PointGradeColor(grade)
+              : GradingSystem.getGradeColor(grade);
+        }
+      }
+      // Fallback to percentage-based color
+      return _getColorFromPercentage(percentage);
+    }
+    
+    return getGradeColorForSystem(percentage, gradingSystem);
+  }
+  
+  /// Helper to get color directly from percentage (0-100)
+  static int _getColorFromPercentage(double percentage) {
+    if (percentage >= 85) return 0xFF4ADE80; // Mint Green (Excellent)
+    if (percentage >= 75) return 0xFF22D3EE; // Cyan (Good)
+    if (percentage >= 60) return 0xFFFACC15; // Yellow (Warning)
+    return 0xFFEF4444; // Red (Fail)
   }
   
   static double _getNumericGrade(double percentage, String gradingSystem) {
