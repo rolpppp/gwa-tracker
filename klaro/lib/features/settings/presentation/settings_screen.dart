@@ -5,6 +5,7 @@ import 'package:klaro/features/dashboard/presentation/screens/term_management_sc
 import 'package:klaro/features/settings/presentation/custom_grading_system_screen.dart';
 import 'package:klaro/features/settings/presentation/contact_screen.dart';
 import 'package:klaro/features/settings/logic/custom_grading_repository.dart';
+import 'package:klaro/core/services/notification_service.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -210,6 +211,55 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
           ),
           const SizedBox(height: 24),
           
+          _buildSection(
+            title: "Scholarship Mode",
+            children: [
+              ValueListenableBuilder<bool>(
+                valueListenable: scholarshipModeNotifier,
+                builder: (context, enabled, _) {
+                  return ListTile(
+                    leading: Icon(PhosphorIcons.medal(), size: 24),
+                    title: const Text("Scholarship Mode"),
+                    subtitle: const Text("Get alerts when your GWA is at risk"),
+                    trailing: Switch(
+                      value: enabled,
+                      onChanged: (val) async {
+                        await ref.read(preferencesProvider).setScholarshipModeEnabled(val);
+                        if (val) {
+                          await NotificationService.requestPermissions();
+                        } else {
+                          await NotificationService.cancelScholarshipAlert();
+                        }
+                      },
+                    ),
+                  );
+                },
+              ),
+              ValueListenableBuilder<bool>(
+                valueListenable: scholarshipModeNotifier,
+                builder: (context, enabled, _) {
+                  if (!enabled) return const SizedBox.shrink();
+                  return ValueListenableBuilder<double>(
+                    valueListenable: scholarshipThresholdNotifier,
+                    builder: (context, threshold, _) {
+                      return ListTile(
+                        leading: Icon(PhosphorIcons.target(), size: 24),
+                        title: const Text("GWA Threshold"),
+                        subtitle: Text(
+                          "Alert when GWA ${ref.read(preferencesProvider).selectedGradingSystem == '5Point' ? 'exceeds' : 'falls below'} ${threshold.toStringAsFixed(2)}",
+                        ),
+                        trailing: Icon(PhosphorIcons.pencil(), size: 18),
+                        onTap: () => _showThresholdDialog(context, threshold),
+                      );
+                    },
+                  );
+                },
+              ),
+              _buildScholarshipInfoTile(),
+            ],
+          ),
+          const SizedBox(height: 24),
+
           _buildSection(
             title: "Preferences",
             children: [
@@ -574,6 +624,79 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
       default:
         return [];
     }
+  }
+
+  Widget _buildScholarshipInfoTile() {
+    return ListTile(
+      leading: Icon(PhosphorIcons.info(), size: 24, color: Colors.grey[500]),
+      title: Text(
+        "How does this work?",
+        style: TextStyle(fontSize: 13, color: Colors.grey[600]),
+      ),
+      subtitle: Text(
+        "Your Real GWA (excluding goals) is compared to the threshold you set. You'll receive an in-app banner and push notification when it approaches or crosses the limit.",
+        style: TextStyle(fontSize: 12, color: Colors.grey[500]),
+      ),
+    );
+  }
+
+  void _showThresholdDialog(BuildContext context, double current) {
+    final controller = TextEditingController(text: current.toStringAsFixed(2));
+    final system = ref.read(preferencesProvider).selectedGradingSystem;
+    final label = system == '5Point'
+        ? 'e.g., 2.00 (DOST: must not exceed 2.00)'
+        : system == '4Point'
+            ? 'e.g., 2.00 (must stay at or above 2.00)'
+            : 'e.g., 3.00 (must stay at or above 3.00 GPA)';
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: const Text("Set GWA Threshold"),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            TextField(
+              controller: controller,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              decoration: InputDecoration(
+                labelText: "Threshold",
+                hintText: label,
+              ),
+              autofocus: true,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              system == '5Point'
+                  ? "You will be alerted when your GWA exceeds this value."
+                  : "You will be alerted when your GWA falls below this value.",
+              style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
+          FilledButton(
+            onPressed: () async {
+              final value = double.tryParse(controller.text.trim());
+              if (value != null && value > 0) {
+                await ref.read(preferencesProvider).setScholarshipGwaThreshold(value);
+                if (context.mounted) Navigator.pop(ctx);
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text("Please enter a valid number.")),
+                );
+              }
+            },
+            child: const Text("Save"),
+          ),
+        ],
+      ),
+    );
   }
 
   void _showEditNameDialog(BuildContext context) {

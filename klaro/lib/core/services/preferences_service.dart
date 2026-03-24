@@ -13,22 +13,56 @@ final onboardingCompleteNotifier = ValueNotifier<bool>(false);
 final themeModeNotifier = ValueNotifier<String>('system');
 // Global ValueNotifier for grading system
 final gradingSystemNotifier = ValueNotifier<String>('5Point');
+// Global ValueNotifiers for scholarship mode
+final scholarshipModeNotifier = ValueNotifier<bool>(false);
+final scholarshipThresholdNotifier = ValueNotifier<double>(2.0);
 
 // Bridge provider to make grading system reactive in Riverpod
 final activeGradingSystemProvider = NotifierProvider<ActiveGradingSystemNotifier, String>(ActiveGradingSystemNotifier.new);
 
+// Bridge providers for scholarship mode reactive state
+final scholarshipModeProvider = NotifierProvider<ScholarshipModeNotifier, bool>(ScholarshipModeNotifier.new);
+final scholarshipThresholdProvider = NotifierProvider<ScholarshipThresholdNotifier, double>(ScholarshipThresholdNotifier.new);
+
 class ActiveGradingSystemNotifier extends Notifier<String> {
   @override
   String build() {
-    // Listen to the global notifier
     final notifier = gradingSystemNotifier;
     notifier.addListener(_listener);
     ref.onDispose(() => notifier.removeListener(_listener));
     return notifier.value;
   }
-  
+
   void _listener() {
     state = gradingSystemNotifier.value;
+  }
+}
+
+class ScholarshipModeNotifier extends Notifier<bool> {
+  @override
+  bool build() {
+    final notifier = scholarshipModeNotifier;
+    notifier.addListener(_listener);
+    ref.onDispose(() => notifier.removeListener(_listener));
+    return notifier.value;
+  }
+
+  void _listener() {
+    state = scholarshipModeNotifier.value;
+  }
+}
+
+class ScholarshipThresholdNotifier extends Notifier<double> {
+  @override
+  double build() {
+    final notifier = scholarshipThresholdNotifier;
+    notifier.addListener(_listener);
+    ref.onDispose(() => notifier.removeListener(_listener));
+    return notifier.value;
+  }
+
+  void _listener() {
+    state = scholarshipThresholdNotifier.value;
   }
 }
 
@@ -39,6 +73,8 @@ class PreferencesService {
     // Initialize notifiers
     themeModeNotifier.value = themeMode;
     gradingSystemNotifier.value = selectedGradingSystem;
+    scholarshipModeNotifier.value = scholarshipModeEnabled;
+    scholarshipThresholdNotifier.value = scholarshipGwaThreshold;
   }
 
   static const _keyOnboardingComplete = 'onboarding_complete';
@@ -47,6 +83,8 @@ class PreferencesService {
   static const _keyInstitution = 'user_institution';
   static const _keyThemeMode = 'theme_mode';
   static const _keyHiddenGradingSystems = 'hidden_grading_systems';
+  static const _keyScholarshipModeEnabled = 'scholarship_mode_enabled';
+  static const _keyScholarshipGwaThreshold = 'scholarship_gwa_threshold';
 
   bool get isOnboardingComplete => _prefs.getBool(_keyOnboardingComplete) ?? false;
   String get selectedGradingSystem => _prefs.getString(_keyGradingSystem) ?? '5Point';
@@ -54,7 +92,9 @@ class PreferencesService {
   String get institution => _prefs.getString(_keyInstitution) ?? '';
   String get themeMode => _prefs.getString(_keyThemeMode) ?? 'system';
   List<String> get hiddenGradingSystems => _prefs.getStringList(_keyHiddenGradingSystems) ?? [];
-  
+  bool get scholarshipModeEnabled => _prefs.getBool(_keyScholarshipModeEnabled) ?? false;
+  double get scholarshipGwaThreshold => _prefs.getDouble(_keyScholarshipGwaThreshold) ?? 2.0;
+
   // Legacy getter for compatibility
   String get gradingSystem => selectedGradingSystem;
 
@@ -96,7 +136,7 @@ class PreferencesService {
   Future<void> setHiddenGradingSystems(List<String> hiddenSystems) async {
     await _prefs.setStringList(_keyHiddenGradingSystems, hiddenSystems);
   }
-  
+
   Future<void> toggleGradingSystemVisibility(String system) async {
     final hidden = hiddenGradingSystems;
     if (hidden.contains(system)) {
@@ -105,5 +145,15 @@ class PreferencesService {
       hidden.add(system);
     }
     await setHiddenGradingSystems(hidden);
+  }
+
+  Future<void> setScholarshipModeEnabled(bool enabled) async {
+    await _prefs.setBool(_keyScholarshipModeEnabled, enabled);
+    scholarshipModeNotifier.value = enabled;
+  }
+
+  Future<void> setScholarshipGwaThreshold(double threshold) async {
+    await _prefs.setDouble(_keyScholarshipGwaThreshold, threshold);
+    scholarshipThresholdNotifier.value = threshold;
   }
 }

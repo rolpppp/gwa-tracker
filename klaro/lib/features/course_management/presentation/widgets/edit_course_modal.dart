@@ -40,6 +40,7 @@ class _EditCourseModalState extends ConsumerState<EditCourseModal> {
           targetGwa: double.tryParse(_targetGwaCtrl.text) ?? 1.0,
           colorHex: widget.course.colorHex,
           termId: widget.course.termId,
+          transmutationMode: widget.course.transmutationMode,
         ),
       );
       

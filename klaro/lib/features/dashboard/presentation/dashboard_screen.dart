@@ -12,6 +12,8 @@ import 'package:klaro/core/services/preferences_service.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:klaro/features/dashboard/presentation/widgets/term_selector.dart';
 import 'package:klaro/core/widgets/info_dialog.dart';
+import 'package:klaro/features/dashboard/logic/scholarship_provider.dart';
+import 'package:klaro/core/services/notification_service.dart';
 
 // State for toggling between Real/Projected GWA
 final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(
@@ -42,6 +44,22 @@ class DashboardScreen extends ConsumerWidget {
     final selectedSystem = ref.watch(activeGradingSystemProvider);
     final userName = prefs.userName;
     final institution = prefs.institution;
+
+    // Fire push notification when scholarship status crosses into at-risk territory
+    ref.listen<ScholarshipStatus?>(scholarshipStatusProvider, (prev, next) {
+      final wasAtRisk = prev?.isAtRisk ?? false;
+      final nowAtRisk = next?.isAtRisk ?? false;
+      if (!wasAtRisk && nowAtRisk && next != null) {
+        NotificationService.showScholarshipAlert(
+          gwaDisplay: next.gwaDisplay,
+          thresholdDisplay: next.thresholdDisplay,
+          isCritical: next.isCritical,
+          isHigherBetter: next.isHigherBetter,
+        );
+      }
+    });
+
+    final scholarshipStatus = ref.watch(scholarshipStatusProvider);
 
     return Scaffold(
       body: CustomScrollView(
@@ -285,6 +303,12 @@ class DashboardScreen extends ConsumerWidget {
             ),
           ),
 
+          // Scholarship warning banner (shown when at risk)
+          if (scholarshipStatus != null && scholarshipStatus.isAtRisk)
+            SliverToBoxAdapter(
+              child: _ScholarshipBanner(status: scholarshipStatus),
+            ),
+
           // Semester Stats Section
           SliverToBoxAdapter(child: _SemesterStatsWidget()),
 
@@ -435,6 +459,66 @@ class DashboardScreen extends ConsumerWidget {
             ),
             loading: () => const SliverFillRemaining(
               child: Center(child: CircularProgressIndicator()),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ScholarshipBanner extends StatelessWidget {
+  final ScholarshipStatus status;
+
+  const _ScholarshipBanner({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    final isCritical = status.isCritical;
+    final color = isCritical ? Colors.red.shade600 : Colors.orange.shade700;
+    final bgColor = isCritical
+        ? Colors.red.shade50
+        : Colors.orange.shade50;
+    final icon = isCritical
+        ? PhosphorIcons.warningCircle()
+        : PhosphorIcons.warning();
+
+    final directionLabel = status.isHigherBetter ? 'below' : 'above';
+    final body = isCritical
+        ? 'Your GWA (${status.gwaDisplay}) has gone $directionLabel your threshold (${status.thresholdDisplay}). Your scholarship may be at risk!'
+        : 'Your GWA (${status.gwaDisplay}) is approaching your threshold (${status.thresholdDisplay}). Stay focused!';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 8, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(icon, size: 20, color: color),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isCritical ? 'Scholarship at Risk' : 'GWA Approaching Limit',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: TextStyle(fontSize: 12, color: color),
+                ),
+              ],
             ),
           ),
         ],

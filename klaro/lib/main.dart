@@ -4,6 +4,7 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:klaro/core/theme/app_theme.dart';
 import 'package:klaro/core/services/database.dart';
+import 'package:klaro/core/services/notification_service.dart';
 import 'package:klaro/core/services/preferences_service.dart';
 import 'package:klaro/core/widgets/main_navigation.dart';
 import 'package:klaro/features/onboarding/enhanced_onboarding_screen.dart';
@@ -14,6 +15,9 @@ void main() async {
   
   // Load environment variables
   await dotenv.load(fileName: ".env");
+
+  // Initialize local notifications
+  await NotificationService.init();
   
   // Load preferences before running the app
   final prefs = await SharedPreferences.getInstance();
