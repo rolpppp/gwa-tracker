@@ -14,6 +14,7 @@ import 'package:klaro/features/dashboard/presentation/widgets/term_selector.dart
 import 'package:klaro/core/widgets/info_dialog.dart';
 import 'package:klaro/features/dashboard/logic/scholarship_provider.dart';
 import 'package:klaro/core/services/notification_service.dart';
+import 'package:klaro/features/dashboard/presentation/screens/gwa_history_screen.dart';
 
 // State for toggling between Real/Projected GWA
 final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(
@@ -1022,20 +1023,52 @@ class _SemesterStatsWidget extends ConsumerWidget {
                 ],
               ),
 
-              // Tertiary: Subtle scroll hint (only when there are courses)
-              if (stats.courseCount > 0) ...[
-                const SizedBox(height: 8),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
+              // Tertiary: History link + scroll hint
+              const SizedBox(height: 8),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  GestureDetector(
+                    onTap: () => Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (_) => const GwaHistoryScreen()),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          PhosphorIcons.clockClockwise(),
+                          size: 12,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 4),
+                        Text(
+                          "View GWA History",
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                            color: Theme.of(context).colorScheme.primary,
+                          ),
+                        ),
+                        const SizedBox(width: 2),
+                        Icon(
+                          PhosphorIcons.arrowRight(),
+                          size: 11,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (stats.courseCount > 0)
                     Icon(
                       PhosphorIcons.caretDown(),
                       size: 12,
-                      color: Theme.of(context).dividerColor.withOpacity(0.5),
+                      color:
+                          Theme.of(context).dividerColor.withOpacity(0.5),
                     ),
-                  ],
-                ),
-              ],
+                ],
+              ),
             ],
           ),
         );

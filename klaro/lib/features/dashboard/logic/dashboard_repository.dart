@@ -48,8 +48,9 @@ class CourseActions {
   }
 }
 
-// Helper function to calculate GWA for a list of courses
-Future<double?> _calculateGwaImpl(
+/// Calculates GWA for the given courses list.
+/// [includeGoals] controls whether ghost/projected assessments are counted.
+Future<double?> calculateGwaForCourses(
   AppDatabase db,
   List<Course> courses,
   String gradingSystem, {
@@ -137,7 +138,7 @@ final overallGwaProvider = StreamProvider<double?>((ref) async* {
     final courses = await (db.select(
       db.courses,
     )..where((c) => c.termId.equals(termId))).get();
-    yield await _calculateGwaImpl(
+    yield await calculateGwaForCourses(
       db,
       courses,
       gradingSystem,
@@ -169,7 +170,7 @@ final realGwaProvider = StreamProvider<double?>((ref) async* {
     )..where((c) => c.termId.equals(termId))).get();
 
     // Calculate GWA ignoring goal/projected assessments
-    yield await _calculateGwaImpl(
+    yield await calculateGwaForCourses(
       db,
       courses,
       gradingSystem,
