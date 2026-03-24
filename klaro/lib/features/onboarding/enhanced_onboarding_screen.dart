@@ -495,18 +495,19 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
             ),
           ).animate().fadeIn(duration: 400.ms).slideX(begin: -0.2, end: 0),
           
-          const SizedBox(height: 12),
-          
+          const SizedBox(height: 8),
+
           Text(
-            "Select the system your institution uses",
+            "Pick the one your school uses. Not sure? Check your syllabus or handbook — you can always change this in Settings later.",
             style: TextStyle(
               color: Colors.grey[600],
-              fontSize: 16,
+              fontSize: 14,
+              height: 1.4,
             ),
           ).animate(delay: 100.ms).fadeIn(duration: 400.ms).slideX(begin: -0.2, end: 0),
-          
-          const SizedBox(height: 32),
-          
+
+          const SizedBox(height: 24),
+
           Expanded(
             child: SingleChildScrollView(
               child: Column(
@@ -514,47 +515,59 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
                   _GradingSystemCard(
                     icon: "🎯",
                     title: "5-Point Scale",
-                    subtitle: "1.0 (Excellent) to 5.0 (Fail)",
-                    example: "92% = 1.25",
+                    subtitle: "1.0 (Excellent) — 5.0 (Fail). Lower is better.",
+                    example: "92% → 1.25",
+                    universities: const ["UP (all campuses)", "PNU", "Most State Universities"],
                     value: "5Point",
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 200.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   _GradingSystemCard(
                     icon: "🎓",
                     title: "4-Point Scale",
-                    subtitle: "4.0 (Excellent) to 0.0 (Fail)",
-                    example: "92% = 3.0 (Very Good)",
+                    subtitle: "4.0 (Excellent) — 0.0 (Fail). Higher is better.",
+                    example: "92% → 3.0 (Very Good)",
+                    universities: const ["DLSU (La Salle)", "Mapua University"],
                     value: "4Point",
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 300.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   _GradingSystemCard(
                     icon: "📝",
                     title: "US Letter Grade",
-                    subtitle: "A (4.0) to F (0.0)",
-                    example: "92% = A (4.0)",
+                    subtitle: "A (4.0) — F (0.0). Higher GPA is better.",
+                    example: "92% → A- (3.7)",
+                    universities: const ["AdMU (Ateneo)", "AIM", "International programs"],
                     value: "US",
                     groupValue: _selectedSystem,
                     onChanged: (v) => setState(() => _selectedSystem = v),
                   ).animate(delay: 400.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
-                  
+
                   const SizedBox(height: 12),
-                  
+
                   _CustomGradingSystemCard(
                   ).animate(delay: 500.ms).fadeIn(duration: 400.ms).slideY(begin: 0.2, end: 0),
+
+                  const SizedBox(height: 16),
+
+                  _TransmutationInfoTile()
+                      .animate(delay: 600.ms)
+                      .fadeIn(duration: 400.ms)
+                      .slideY(begin: 0.2, end: 0),
+
+                  const SizedBox(height: 8),
                 ],
               ),
             ),
           ),
-          
-          const SizedBox(height: 16),
+
+          const SizedBox(height: 8),
         ],
       ),
     );
@@ -739,11 +752,196 @@ class _CustomGradingSystemCard extends StatelessWidget {
   }
 }
 
+class _TransmutationInfoTile extends StatefulWidget {
+  const _TransmutationInfoTile();
+
+  @override
+  State<_TransmutationInfoTile> createState() => _TransmutationInfoTileState();
+}
+
+class _TransmutationInfoTileState extends State<_TransmutationInfoTile> {
+  bool _expanded = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+      ),
+      child: Column(
+        children: [
+          InkWell(
+            borderRadius: BorderRadius.circular(14),
+            onTap: () => setState(() => _expanded = !_expanded),
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              child: Row(
+                children: [
+                  Icon(
+                    PhosphorIcons.question(),
+                    size: 18,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      "Does your professor use transmutation?",
+                      style: TextStyle(
+                        fontWeight: FontWeight.w600,
+                        fontSize: 13,
+                        color: Theme.of(context).textTheme.bodyMedium?.color,
+                      ),
+                    ),
+                  ),
+                  Icon(
+                    _expanded ? PhosphorIcons.caretUp() : PhosphorIcons.caretDown(),
+                    size: 16,
+                    color: Colors.grey[500],
+                  ),
+                ],
+              ),
+            ),
+          ),
+          if (_expanded)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Divider(height: 1, color: Theme.of(context).dividerColor.withOpacity(0.4)),
+                  const SizedBox(height: 12),
+                  Text(
+                    "Transmutation adjusts your raw score before converting it to a grade. Two types are common in Philippine schools:",
+                    style: TextStyle(
+                      fontSize: 13,
+                      color: Colors.grey[700],
+                      height: 1.4,
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  _buildTransmutationRow(
+                    context,
+                    label: "Base 50",
+                    formula: "Transmuted = (Raw ÷ 100) × 50 + 50",
+                    hint: "e.g. 70% → 85%",
+                    example: "\"A score of 60 is the new 80.\"",
+                  ),
+                  const SizedBox(height: 8),
+                  _buildTransmutationRow(
+                    context,
+                    label: "Base 60",
+                    formula: "Transmuted = (Raw ÷ 100) × 60 + 40",
+                    hint: "e.g. 70% → 82%",
+                    example: "\"Passing is 60%, transmuted to 76%.\"",
+                  ),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(10),
+                    decoration: BoxDecoration(
+                      color: Theme.of(context).colorScheme.primary.withOpacity(0.08),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          PhosphorIcons.lightbulb(),
+                          size: 16,
+                          color: Theme.of(context).colorScheme.primary,
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            "You don't need to choose now. Klaro lets you set transmutation per course after setup — just tap the course and look for the transmutation option.",
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: Theme.of(context).colorScheme.primary,
+                              height: 1.4,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTransmutationRow(
+    BuildContext context, {
+    required String label,
+    required String formula,
+    required String hint,
+    required String example,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surfaceContainerHigh,
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                decoration: BoxDecoration(
+                  color: Theme.of(context).colorScheme.primary.withOpacity(0.12),
+                  borderRadius: BorderRadius.circular(4),
+                ),
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                    color: Theme.of(context).colorScheme.primary,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                hint,
+                style: TextStyle(fontSize: 12, color: Colors.grey[600]),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(
+            formula,
+            style: const TextStyle(
+              fontFamily: 'monospace',
+              fontSize: 11,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            example,
+            style: TextStyle(
+              fontSize: 11,
+              fontStyle: FontStyle.italic,
+              color: Colors.grey[600],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
 class _GradingSystemCard extends StatelessWidget {
   final String icon;
   final String title;
   final String subtitle;
   final String example;
+  final List<String> universities;
   final String value;
   final String groupValue;
   final Function(String) onChanged;
@@ -753,6 +951,7 @@ class _GradingSystemCard extends StatelessWidget {
     required this.title,
     required this.subtitle,
     required this.example,
+    required this.universities,
     required this.value,
     required this.groupValue,
     required this.onChanged,
@@ -840,7 +1039,7 @@ class _GradingSystemCard extends StatelessWidget {
                       borderRadius: BorderRadius.circular(6),
                     ),
                     child: Text(
-                      "Example: $example",
+                      "e.g. $example",
                       style: TextStyle(
                         color: isSelected
                             ? Theme.of(context).primaryColor
@@ -849,6 +1048,37 @@ class _GradingSystemCard extends StatelessWidget {
                         fontWeight: FontWeight.w600,
                       ),
                     ),
+                  ),
+                  const SizedBox(height: 8),
+                  Wrap(
+                    spacing: 4,
+                    runSpacing: 4,
+                    children: universities.map((uni) {
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? Theme.of(context).primaryColor.withOpacity(0.08)
+                              : Theme.of(context).colorScheme.surfaceContainerHighest,
+                          borderRadius: BorderRadius.circular(4),
+                          border: Border.all(
+                            color: isSelected
+                                ? Theme.of(context).primaryColor.withOpacity(0.3)
+                                : Theme.of(context).dividerColor,
+                          ),
+                        ),
+                        child: Text(
+                          uni,
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: isSelected
+                                ? Theme.of(context).primaryColor
+                                : Theme.of(context).textTheme.bodySmall?.color?.withOpacity(0.7),
+                            fontWeight: FontWeight.w500,
+                          ),
+                        ),
+                      );
+                    }).toList(),
                   ),
                 ],
               ),
