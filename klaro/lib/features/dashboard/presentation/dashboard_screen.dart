@@ -11,6 +11,7 @@ import 'package:klaro/core/logic/grade_display_helper.dart';
 import 'package:klaro/core/services/preferences_service.dart';
 import 'package:percent_indicator/percent_indicator.dart';
 import 'package:klaro/features/dashboard/presentation/widgets/term_selector.dart';
+import 'package:klaro/core/widgets/info_dialog.dart';
 
 // State for toggling between Real/Projected GWA
 final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(
@@ -237,6 +238,28 @@ class DashboardScreen extends ConsumerWidget {
                                           "Tap to switch view",
                                           style: TextStyle(
                                             fontSize: 10,
+                                            color: Colors.grey[400],
+                                          ),
+                                        ),
+                                        const SizedBox(width: 8),
+                                        GestureDetector(
+                                          onTap: () => showKlaroInfoDialog(
+                                            context,
+                                            title: 'How is your GWA computed?',
+                                            body:
+                                                'Your GWA (General Weighted Average) is calculated in three steps:\n\n'
+                                                '1. Each component score (Quizzes, Exams, etc.) is computed as the sum of your earned points divided by the total possible points.\n\n'
+                                                '2. Component scores are weighted by their assigned percentages and summed to produce each course\'s raw percentage.\n\n'
+                                                '3. Each course\'s raw percentage is converted to a grade, then multiplied by its unit value. The GWA is the total grade-units divided by total units enrolled.\n\n'
+                                                'Projected GWA includes ghost/goal assessments you added. Real GWA shows only grades you have actually earned.',
+                                            formula:
+                                                'Course % = Σ(Component Score × Weight)\n'
+                                                'Grade    = convert(Course %)\n'
+                                                'GWA      = Σ(Grade × Units) / Σ(Units)',
+                                          ),
+                                          child: Icon(
+                                            PhosphorIcons.info(),
+                                            size: 13,
                                             color: Colors.grey[400],
                                           ),
                                         ),
@@ -483,7 +506,7 @@ class _CourseCard extends ConsumerWidget {
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 6),
                     Row(
                       children: [
                         Icon(
@@ -514,6 +537,22 @@ class _CourseCard extends ConsumerWidget {
                           ),
                         ),
                       ],
+                    ),
+                    // Status chip — only shown when enough data exists
+                    gradeAsync.when(
+                      data: (standing) {
+                        if (!standing.hasEnoughData) return const SizedBox.shrink();
+                        final status = GradeDisplayHelper.getCourseStatus(
+                          standing.realPercentage,
+                          selectedSystem,
+                        );
+                        return Padding(
+                          padding: const EdgeInsets.only(top: 6),
+                          child: _StatusChip(status: status),
+                        );
+                      },
+                      loading: () => const SizedBox.shrink(),
+                      error: (_, __) => const SizedBox.shrink(),
                     ),
                   ],
                 ),
@@ -569,41 +608,57 @@ class _CourseCard extends ConsumerWidget {
                       db,
                     ),
                     builder: (context, snapshot) {
-                      final grade =
+                      final numericGrade =
                           snapshot.data ??
                           standing.realPercentage.toStringAsFixed(2);
+
+                      // For US system: show letter as primary, numeric as subtitle.
+                      // For 4Point: show numeric as primary, descriptive label as subtitle.
+                      // For 5Point / others: show numeric, "Grade" label.
+                      final String primaryText;
+                      final String subtitleText;
+                      if (selectedSystem == 'US') {
+                        final gpa = GradingSystem.convertToUSGrade(standing.realPercentage);
+                        primaryText  = GradingSystem.getUSLetter(gpa);
+                        subtitleText = numericGrade;
+                      } else if (selectedSystem == '4Point') {
+                        final gpa = GradingSystem.convertTo4PointGrade(standing.realPercentage);
+                        primaryText  = numericGrade;
+                        subtitleText = GradingSystem.get4PointLabel(gpa);
+                      } else {
+                        primaryText  = numericGrade;
+                        subtitleText = 'Grade';
+                      }
+
+                      final gradeColor = Color(
+                        GradeDisplayHelper.getGradeColorForSystem(
+                          standing.realPercentage,
+                          selectedSystem,
+                        ),
+                      );
+
                       return Container(
                         padding: const EdgeInsets.symmetric(
                           horizontal: 10,
                           vertical: 6,
                         ),
                         decoration: BoxDecoration(
-                          color: Color(
-                            GradeDisplayHelper.getGradeColorForSystem(
-                              standing.realPercentage,
-                              selectedSystem,
-                            ),
-                          ).withOpacity(0.15),
+                          color: gradeColor.withOpacity(0.15),
                           borderRadius: BorderRadius.circular(8),
                         ),
                         child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              grade,
+                              primaryText,
                               style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 18,
-                                color: Color(
-                                  GradeDisplayHelper.getGradeColorForSystem(
-                                    standing.realPercentage,
-                                    selectedSystem,
-                                  ),
-                                ),
+                                color: gradeColor,
                               ),
                             ),
                             Text(
-                              "Grade",
+                              subtitleText,
                               style: TextStyle(
                                 fontSize: 9,
                                 color: Colors.grey[600],
@@ -628,6 +683,59 @@ class _CourseCard extends ConsumerWidget {
             ],
           ),
         ),
+      ),
+    );
+  }
+}
+
+/// Compact chip showing a course's passing/at-risk/failing status.
+class _StatusChip extends StatelessWidget {
+  final CourseStatus status;
+  const _StatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == CourseStatus.noData) return const SizedBox.shrink();
+
+    final Color color;
+    final String label;
+    final IconData icon;
+
+    if (status == CourseStatus.passing) {
+      color = const Color(0xFF4ADE80);
+      label = 'Passing';
+      icon  = PhosphorIcons.checkCircle();
+    } else if (status == CourseStatus.atRisk) {
+      color = const Color(0xFFFACC15);
+      label = 'At Risk';
+      icon  = PhosphorIcons.warning();
+    } else {
+      color = const Color(0xFFEF4444);
+      label = 'Failing';
+      icon  = PhosphorIcons.xCircle();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 3),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(6),
+        border: Border.all(color: color.withOpacity(0.35), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 11, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
       ),
     );
   }

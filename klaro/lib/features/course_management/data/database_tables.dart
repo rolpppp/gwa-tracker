@@ -16,6 +16,9 @@ class Courses extends Table {
   RealColumn get targetGwa => real()(); // 1.75
   TextColumn get colorHex => text()(); // "#FF5500" - for UI
 
+  // Transmutation mode: 'none' (Base 0), 'base50' (Base 50), 'base60' (Base 60 / DepEd)
+  TextColumn get transmutationMode => text().withDefault(const Constant('none'))();
+
   // Foreign Key: Links to a Term
   IntColumn get termId => integer().references(Terms, #id)();
 }

@@ -16,7 +16,7 @@ class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
   @override
-  int get schemaVersion => 3;
+  int get schemaVersion => 4;
 
   @override
   MigrationStrategy get migration {
@@ -33,6 +33,10 @@ class AppDatabase extends _$AppDatabase {
           // Add custom grading systems tables
           await m.createTable(customGradingSystems);
           await m.createTable(customGradingScales);
+        }
+        if (from < 4) {
+          // Add transmutationMode column to courses (default 'none' = no transmutation)
+          await m.addColumn(courses, courses.transmutationMode as GeneratedColumn);
         }
       },
     );

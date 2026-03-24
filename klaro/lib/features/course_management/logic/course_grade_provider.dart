@@ -5,13 +5,13 @@ import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 
 // Return type: Holds both real and projected grades
 class CourseStanding {
-  final double realPercentage;    // Based on actual records only
-  final double realGrade;         // UP Grade (e.g., 1.75) based on real records
-  
-  final double projectedPercentage; // Real + Goal items
-  final double projectedGrade;      // UP Grade including Goals
-  
-  final double weightGraded;      // Percentage of course weight that has assessments (0.0 to 1.0)
+  final double realPercentage;      // Raw % from actual records (before grade conversion)
+  final double realGrade;           // Converted grade (e.g., 1.75 UP) from real records
+
+  final double projectedPercentage; // Raw % including goal/ghost assessments
+  final double projectedGrade;      // Converted grade including goals
+
+  final double weightGraded;        // Fraction of course weight that has real assessments (0.0–1.0)
 
   CourseStanding({
     required this.realPercentage,
@@ -20,67 +20,78 @@ class CourseStanding {
     required this.projectedGrade,
     required this.weightGraded,
   });
-  
+
   // Backwards compatibility getters
   double get percentage => realPercentage;
   double get finalGrade => realGrade;
-  
-  // Check if there's enough data to show a meaningful grade (at least 30% graded)
+
+  // At least 30% of the course weight must be graded to show a meaningful grade
   bool get hasEnoughData => weightGraded >= 0.3;
 }
 
-// Manual StreamProvider.family for course standing
+// StreamProvider.family for a single course's standing.
+// Re-emits whenever any assessment changes, fetching the course's
+// transmutation mode fresh each time so changes take effect immediately.
 final courseStandingProvider = StreamProvider.family<CourseStanding, int>((ref, courseId) async* {
   final db = ref.watch(databaseProvider);
 
-  // Listen to ALL assessments for this course (to detect any assessment changes)
+  // Trigger recalculation whenever any assessment is added/edited/deleted.
   final allAssessmentsStream = db.select(db.assessments).watch();
-  
+
   await for (final _ in allAssessmentsStream) {
-    // Recalculate whenever ANY assessment changes
+    // Fetch the course to read its current transmutation mode.
+    final course = await (db.select(db.courses)
+      ..where((c) => c.id.equals(courseId))).getSingleOrNull();
+
+    final transmutationMode = GradeCalculator.parseMode(
+      course?.transmutationMode ?? 'none',
+    );
+
     final components = await (db.select(db.gradingComponents)
       ..where((c) => c.courseId.equals(courseId))).get();
-    
-    // Variables for REAL grade
+
+    // Accumulators for real (no goals) and projected (with goals) grades.
     double realWeightedScore = 0.0;
-    double realWeightUsed = 0.0;
-
-    // Variables for PROJECTED grade (Real + Goals)
+    double realWeightUsed   = 0.0;
     double projWeightedScore = 0.0;
-    double projWeightUsed = 0.0;
+    double projWeightUsed   = 0.0;
 
-    // For every component (Quizzes, Exams...), calculate its score
     for (var component in components) {
-      // Fetch assessments for this component
       final assessments = await (db.select(db.assessments)
         ..where((a) => a.componentId.equals(component.id))).get();
-      
-      // --- 1. Calculate REAL Score (exclude goals) ---
+
+      // --- Real score: excludes goal/ghost assessments ---
       final realAssessments = assessments.where((a) => !a.isGoal).toList();
       if (realAssessments.isNotEmpty) {
-        final score = GradeCalculator.calculateComponentScore(realAssessments);
-        realWeightedScore += (score * component.weightPercent);
-        realWeightUsed += component.weightPercent;
+        final score = GradeCalculator.calculateComponentScoreWithTransmutation(
+          realAssessments,
+          transmutationMode,
+        );
+        realWeightedScore += score * component.weightPercent;
+        realWeightUsed    += component.weightPercent;
       }
 
-      // --- 2. Calculate PROJECTED Score (All items) ---
+      // --- Projected score: all assessments (real + goals) ---
       if (assessments.isNotEmpty) {
-        final score = GradeCalculator.calculateComponentScore(assessments);
-        projWeightedScore += (score * component.weightPercent);
-        projWeightUsed += component.weightPercent;
+        final score = GradeCalculator.calculateComponentScoreWithTransmutation(
+          assessments,
+          transmutationMode,
+        );
+        projWeightedScore += score * component.weightPercent;
+        projWeightUsed    += component.weightPercent;
       }
     }
 
-    // --- Normalize & Convert ---
-    double finalRealPct = (realWeightUsed > 0) ? (realWeightedScore / realWeightUsed) : 0.0;
-    double finalProjPct = (projWeightUsed > 0) ? (projWeightedScore / projWeightUsed) : 0.0;
+    // Normalize by the weight actually used (handles partially-set-up courses).
+    final finalRealPct = (realWeightUsed > 0) ? (realWeightedScore / realWeightUsed) : 0.0;
+    final finalProjPct = (projWeightUsed > 0) ? (projWeightedScore / projWeightUsed) : 0.0;
 
     yield CourseStanding(
-      realPercentage: finalRealPct,
-      realGrade: GradingSystem.convertToUPGrade(finalRealPct),
+      realPercentage:      finalRealPct,
+      realGrade:           GradingSystem.convertToUPGrade(finalRealPct),
       projectedPercentage: finalProjPct,
-      projectedGrade: GradingSystem.convertToUPGrade(finalProjPct),
-      weightGraded: realWeightUsed, // Track how much of the course has been graded
+      projectedGrade:      GradingSystem.convertToUPGrade(finalProjPct),
+      weightGraded:        realWeightUsed,
     );
   }
 });

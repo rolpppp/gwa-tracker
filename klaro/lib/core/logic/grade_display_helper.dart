@@ -1,7 +1,39 @@
 import 'package:klaro/core/logic/grading_system.dart';
 import 'package:klaro/core/services/database.dart';
 
+/// Per-course academic standing relative to the passing threshold.
+///
+/// Thresholds are derived from each grading system's passing grade:
+///   5Point:  60% = grade 3.00 (pass); at risk = 60–64.9%
+///   4Point:  70% = grade 1.0 (pass);  at risk = 70–74.9%
+///   US:      65% = grade D/1.0 (pass); at risk = 65–69.9%
+///   default: 75% = pass (Philippine private university standard); at risk = 75–79.9%
+enum CourseStatus { passing, atRisk, failing, noData }
+
 class GradeDisplayHelper {
+  /// Returns the course's academic standing for a given raw percentage.
+  static CourseStatus getCourseStatus(double percentage, String gradingSystem) {
+    switch (gradingSystem) {
+      case '5Point':
+        if (percentage >= 65) return CourseStatus.passing;
+        if (percentage >= 60) return CourseStatus.atRisk;
+        return CourseStatus.failing;
+      case '4Point':
+        if (percentage >= 75) return CourseStatus.passing;
+        if (percentage >= 70) return CourseStatus.atRisk;
+        return CourseStatus.failing;
+      case 'US':
+        if (percentage >= 70) return CourseStatus.passing;
+        if (percentage >= 65) return CourseStatus.atRisk;
+        return CourseStatus.failing;
+      default:
+        // Philippine private university standard: 75% passing
+        if (percentage >= 80) return CourseStatus.passing;
+        if (percentage >= 75) return CourseStatus.atRisk;
+        return CourseStatus.failing;
+    }
+  }
+
   /// Converts a percentage (0-100) to a grade string based on the selected grading system
   static String formatGrade(double percentage, String gradingSystem) {
     switch (gradingSystem) {

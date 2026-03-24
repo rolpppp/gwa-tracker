@@ -314,6 +314,19 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, Course> {
     type: DriftSqlType.string,
     requiredDuringInsert: true,
   );
+  static const VerificationMeta _transmutationModeMeta = const VerificationMeta(
+    'transmutationMode',
+  );
+  @override
+  late final GeneratedColumn<String> transmutationMode =
+      GeneratedColumn<String>(
+        'transmutation_mode',
+        aliasedName,
+        false,
+        type: DriftSqlType.string,
+        requiredDuringInsert: false,
+        defaultValue: const Constant('none'),
+      );
   static const VerificationMeta _termIdMeta = const VerificationMeta('termId');
   @override
   late final GeneratedColumn<int> termId = GeneratedColumn<int>(
@@ -334,6 +347,7 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, Course> {
     units,
     targetGwa,
     colorHex,
+    transmutationMode,
     termId,
   ];
   @override
@@ -391,6 +405,15 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, Course> {
     } else if (isInserting) {
       context.missing(_colorHexMeta);
     }
+    if (data.containsKey('transmutation_mode')) {
+      context.handle(
+        _transmutationModeMeta,
+        transmutationMode.isAcceptableOrUnknown(
+          data['transmutation_mode']!,
+          _transmutationModeMeta,
+        ),
+      );
+    }
     if (data.containsKey('term_id')) {
       context.handle(
         _termIdMeta,
@@ -432,6 +455,10 @@ class $CoursesTable extends Courses with TableInfo<$CoursesTable, Course> {
         DriftSqlType.string,
         data['${effectivePrefix}color_hex'],
       )!,
+      transmutationMode: attachedDatabase.typeMapping.read(
+        DriftSqlType.string,
+        data['${effectivePrefix}transmutation_mode'],
+      )!,
       termId: attachedDatabase.typeMapping.read(
         DriftSqlType.int,
         data['${effectivePrefix}term_id'],
@@ -452,6 +479,7 @@ class Course extends DataClass implements Insertable<Course> {
   final double units;
   final double targetGwa;
   final String colorHex;
+  final String transmutationMode;
   final int termId;
   const Course({
     required this.id,
@@ -460,6 +488,7 @@ class Course extends DataClass implements Insertable<Course> {
     required this.units,
     required this.targetGwa,
     required this.colorHex,
+    required this.transmutationMode,
     required this.termId,
   });
   @override
@@ -471,6 +500,7 @@ class Course extends DataClass implements Insertable<Course> {
     map['units'] = Variable<double>(units);
     map['target_gwa'] = Variable<double>(targetGwa);
     map['color_hex'] = Variable<String>(colorHex);
+    map['transmutation_mode'] = Variable<String>(transmutationMode);
     map['term_id'] = Variable<int>(termId);
     return map;
   }
@@ -483,6 +513,7 @@ class Course extends DataClass implements Insertable<Course> {
       units: Value(units),
       targetGwa: Value(targetGwa),
       colorHex: Value(colorHex),
+      transmutationMode: Value(transmutationMode),
       termId: Value(termId),
     );
   }
@@ -499,6 +530,7 @@ class Course extends DataClass implements Insertable<Course> {
       units: serializer.fromJson<double>(json['units']),
       targetGwa: serializer.fromJson<double>(json['targetGwa']),
       colorHex: serializer.fromJson<String>(json['colorHex']),
+      transmutationMode: serializer.fromJson<String>(json['transmutationMode']),
       termId: serializer.fromJson<int>(json['termId']),
     );
   }
@@ -512,6 +544,7 @@ class Course extends DataClass implements Insertable<Course> {
       'units': serializer.toJson<double>(units),
       'targetGwa': serializer.toJson<double>(targetGwa),
       'colorHex': serializer.toJson<String>(colorHex),
+      'transmutationMode': serializer.toJson<String>(transmutationMode),
       'termId': serializer.toJson<int>(termId),
     };
   }
@@ -523,6 +556,7 @@ class Course extends DataClass implements Insertable<Course> {
     double? units,
     double? targetGwa,
     String? colorHex,
+    String? transmutationMode,
     int? termId,
   }) => Course(
     id: id ?? this.id,
@@ -531,6 +565,7 @@ class Course extends DataClass implements Insertable<Course> {
     units: units ?? this.units,
     targetGwa: targetGwa ?? this.targetGwa,
     colorHex: colorHex ?? this.colorHex,
+    transmutationMode: transmutationMode ?? this.transmutationMode,
     termId: termId ?? this.termId,
   );
   Course copyWithCompanion(CoursesCompanion data) {
@@ -541,6 +576,9 @@ class Course extends DataClass implements Insertable<Course> {
       units: data.units.present ? data.units.value : this.units,
       targetGwa: data.targetGwa.present ? data.targetGwa.value : this.targetGwa,
       colorHex: data.colorHex.present ? data.colorHex.value : this.colorHex,
+      transmutationMode: data.transmutationMode.present
+          ? data.transmutationMode.value
+          : this.transmutationMode,
       termId: data.termId.present ? data.termId.value : this.termId,
     );
   }
@@ -554,14 +592,23 @@ class Course extends DataClass implements Insertable<Course> {
           ..write('units: $units, ')
           ..write('targetGwa: $targetGwa, ')
           ..write('colorHex: $colorHex, ')
+          ..write('transmutationMode: $transmutationMode, ')
           ..write('termId: $termId')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode =>
-      Object.hash(id, code, name, units, targetGwa, colorHex, termId);
+  int get hashCode => Object.hash(
+    id,
+    code,
+    name,
+    units,
+    targetGwa,
+    colorHex,
+    transmutationMode,
+    termId,
+  );
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
@@ -572,6 +619,7 @@ class Course extends DataClass implements Insertable<Course> {
           other.units == this.units &&
           other.targetGwa == this.targetGwa &&
           other.colorHex == this.colorHex &&
+          other.transmutationMode == this.transmutationMode &&
           other.termId == this.termId);
 }
 
@@ -582,6 +630,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
   final Value<double> units;
   final Value<double> targetGwa;
   final Value<String> colorHex;
+  final Value<String> transmutationMode;
   final Value<int> termId;
   const CoursesCompanion({
     this.id = const Value.absent(),
@@ -590,6 +639,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
     this.units = const Value.absent(),
     this.targetGwa = const Value.absent(),
     this.colorHex = const Value.absent(),
+    this.transmutationMode = const Value.absent(),
     this.termId = const Value.absent(),
   });
   CoursesCompanion.insert({
@@ -599,6 +649,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
     required double units,
     required double targetGwa,
     required String colorHex,
+    this.transmutationMode = const Value.absent(),
     required int termId,
   }) : code = Value(code),
        name = Value(name),
@@ -613,6 +664,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
     Expression<double>? units,
     Expression<double>? targetGwa,
     Expression<String>? colorHex,
+    Expression<String>? transmutationMode,
     Expression<int>? termId,
   }) {
     return RawValuesInsertable({
@@ -622,6 +674,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
       if (units != null) 'units': units,
       if (targetGwa != null) 'target_gwa': targetGwa,
       if (colorHex != null) 'color_hex': colorHex,
+      if (transmutationMode != null) 'transmutation_mode': transmutationMode,
       if (termId != null) 'term_id': termId,
     });
   }
@@ -633,6 +686,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
     Value<double>? units,
     Value<double>? targetGwa,
     Value<String>? colorHex,
+    Value<String>? transmutationMode,
     Value<int>? termId,
   }) {
     return CoursesCompanion(
@@ -642,6 +696,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
       units: units ?? this.units,
       targetGwa: targetGwa ?? this.targetGwa,
       colorHex: colorHex ?? this.colorHex,
+      transmutationMode: transmutationMode ?? this.transmutationMode,
       termId: termId ?? this.termId,
     );
   }
@@ -667,6 +722,9 @@ class CoursesCompanion extends UpdateCompanion<Course> {
     if (colorHex.present) {
       map['color_hex'] = Variable<String>(colorHex.value);
     }
+    if (transmutationMode.present) {
+      map['transmutation_mode'] = Variable<String>(transmutationMode.value);
+    }
     if (termId.present) {
       map['term_id'] = Variable<int>(termId.value);
     }
@@ -682,6 +740,7 @@ class CoursesCompanion extends UpdateCompanion<Course> {
           ..write('units: $units, ')
           ..write('targetGwa: $targetGwa, ')
           ..write('colorHex: $colorHex, ')
+          ..write('transmutationMode: $transmutationMode, ')
           ..write('termId: $termId')
           ..write(')'))
         .toString();
@@ -2386,6 +2445,7 @@ typedef $$CoursesTableCreateCompanionBuilder =
       required double units,
       required double targetGwa,
       required String colorHex,
+      Value<String> transmutationMode,
       required int termId,
     });
 typedef $$CoursesTableUpdateCompanionBuilder =
@@ -2396,6 +2456,7 @@ typedef $$CoursesTableUpdateCompanionBuilder =
       Value<double> units,
       Value<double> targetGwa,
       Value<String> colorHex,
+      Value<String> transmutationMode,
       Value<int> termId,
     });
 
@@ -2482,6 +2543,11 @@ class $$CoursesTableFilterComposer
 
   ColumnFilters<String> get colorHex => $composableBuilder(
     column: $table.colorHex,
+    builder: (column) => ColumnFilters(column),
+  );
+
+  ColumnFilters<String> get transmutationMode => $composableBuilder(
+    column: $table.transmutationMode,
     builder: (column) => ColumnFilters(column),
   );
 
@@ -2573,6 +2639,11 @@ class $$CoursesTableOrderingComposer
     builder: (column) => ColumnOrderings(column),
   );
 
+  ColumnOrderings<String> get transmutationMode => $composableBuilder(
+    column: $table.transmutationMode,
+    builder: (column) => ColumnOrderings(column),
+  );
+
   $$TermsTableOrderingComposer get termId {
     final $$TermsTableOrderingComposer composer = $composerBuilder(
       composer: this,
@@ -2623,6 +2694,11 @@ class $$CoursesTableAnnotationComposer
 
   GeneratedColumn<String> get colorHex =>
       $composableBuilder(column: $table.colorHex, builder: (column) => column);
+
+  GeneratedColumn<String> get transmutationMode => $composableBuilder(
+    column: $table.transmutationMode,
+    builder: (column) => column,
+  );
 
   $$TermsTableAnnotationComposer get termId {
     final $$TermsTableAnnotationComposer composer = $composerBuilder(
@@ -2708,6 +2784,7 @@ class $$CoursesTableTableManager
                 Value<double> units = const Value.absent(),
                 Value<double> targetGwa = const Value.absent(),
                 Value<String> colorHex = const Value.absent(),
+                Value<String> transmutationMode = const Value.absent(),
                 Value<int> termId = const Value.absent(),
               }) => CoursesCompanion(
                 id: id,
@@ -2716,6 +2793,7 @@ class $$CoursesTableTableManager
                 units: units,
                 targetGwa: targetGwa,
                 colorHex: colorHex,
+                transmutationMode: transmutationMode,
                 termId: termId,
               ),
           createCompanionCallback:
@@ -2726,6 +2804,7 @@ class $$CoursesTableTableManager
                 required double units,
                 required double targetGwa,
                 required String colorHex,
+                Value<String> transmutationMode = const Value.absent(),
                 required int termId,
               }) => CoursesCompanion.insert(
                 id: id,
@@ -2734,6 +2813,7 @@ class $$CoursesTableTableManager
                 units: units,
                 targetGwa: targetGwa,
                 colorHex: colorHex,
+                transmutationMode: transmutationMode,
                 termId: termId,
               ),
           withReferenceMapper: (p0) => p0

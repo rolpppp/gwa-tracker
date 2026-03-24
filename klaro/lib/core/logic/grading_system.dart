@@ -144,6 +144,18 @@ class GradingSystem {
     return getColor(grade, system);
   }
 
+  /// Returns the descriptive label for a 4-Point GPA value (DLSU-style).
+  static String get4PointLabel(double gpa) {
+    if (gpa >= 4.0) return 'Excellent';
+    if (gpa >= 3.5) return 'Superior';
+    if (gpa >= 3.0) return 'Very Good';
+    if (gpa >= 2.5) return 'Good';
+    if (gpa >= 2.0) return 'Satisfactory';
+    if (gpa >= 1.5) return 'Fair';
+    if (gpa >= 1.0) return 'Pass';
+    return 'Fail';
+  }
+
   /// Converts a GPA (0.0 - 4.0) to US Letter Grade
   /// This is an approximation based on standard GPA scales
   static String getUSLetter(double gpa) {

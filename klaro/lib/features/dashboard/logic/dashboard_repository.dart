@@ -69,6 +69,9 @@ Future<double?> _calculateGwaImpl(
     double courseWeightedScore = 0;
     double courseWeightUsed = 0;
 
+    // Read this course's transmutation mode once per course.
+    final transmutationMode = GradeCalculator.parseMode(course.transmutationMode);
+
     for (var comp in components) {
       // Fetch assessments for this component
       // Logic: If includeGoals is false, we strictly filter out assessments where isGoal is true
@@ -82,7 +85,10 @@ Future<double?> _calculateGwaImpl(
               }))
               .get();
 
-      final score = GradeCalculator.calculateComponentScore(assessments);
+      final score = GradeCalculator.calculateComponentScoreWithTransmutation(
+        assessments,
+        transmutationMode,
+      );
       courseWeightedScore += (score * comp.weightPercent);
       courseWeightUsed += comp.weightPercent;
     }

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:drift/drift.dart' show Value;
 import 'package:klaro/core/services/database.dart';
 import 'package:klaro/core/logic/grade_display_helper.dart';
 import 'package:klaro/core/services/preferences_service.dart';
@@ -11,6 +12,7 @@ import 'package:klaro/features/course_management/presentation/widgets/edit_cours
 import 'package:klaro/features/course_management/presentation/widgets/component_simulator_modal.dart';
 import 'package:klaro/features/course_management/presentation/syllabus_upload_screen.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
+import 'package:klaro/core/widgets/info_dialog.dart';
 
 // Providers for components and assessments
 final courseComponentsProvider = StreamProvider.family<List<GradingComponent>, int>((ref, courseId) {
@@ -199,18 +201,43 @@ class CourseDetailScreen extends ConsumerWidget {
   }
 }
 
-class _CourseHeader extends ConsumerWidget {
+class _CourseHeader extends ConsumerStatefulWidget {
   final Course course;
-  const _CourseHeader({required this.course}); 
+  const _CourseHeader({required this.course});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<_CourseHeader> createState() => _CourseHeaderState();
+}
+
+class _CourseHeaderState extends ConsumerState<_CourseHeader> {
+  late String _transmutationMode;
+
+  @override
+  void initState() {
+    super.initState();
+    _transmutationMode = widget.course.transmutationMode;
+  }
+
+  Future<void> _setTransmutationMode(String mode) async {
+    final db = ref.read(databaseProvider);
+    await (db.update(db.courses)
+      ..where((c) => c.id.equals(widget.course.id)))
+      .write(CoursesCompanion(transmutationMode: Value(mode)));
+    // Force provider to re-fetch with new transmutation mode
+    ref.invalidate(courseStandingProvider(widget.course.id));
+    setState(() => _transmutationMode = mode);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final course = widget.course;
+
     // WATCH THE CALCULATED GRADE
     final gradeAsync = ref.watch(courseStandingProvider(course.id));
-    
+
     // WATCH COMPONENTS to calculate total weight used
     final componentsAsync = ref.watch(courseComponentsProvider(course.id));
-    
+
     // Get selected grading system
     final selectedSystem = ref.watch(preferencesProvider).selectedGradingSystem;
 
@@ -311,35 +338,23 @@ class _CourseHeader extends ConsumerWidget {
                           if (hasGoals) ...[
                             GestureDetector(
                               onTap: () {
-                                // Show percentage tooltip
-                                showDialog(
-                                  context: context,
-                                  builder: (ctx) => AlertDialog(
-                                    title: const Text("Grade Breakdown"),
-                                content: Column(
-                                  mainAxisSize: MainAxisSize.min,
-                                  crossAxisAlignment: CrossAxisAlignment.start,
-                                  children: [
-                                    Text(
-                                      "Projected: ${standing.projectedPercentage.toStringAsFixed(1)}% ($projectedGrade)",
-                                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold, color: Theme.of(context).colorScheme.secondary),
-                                    ),
-                                    const SizedBox(height: 8),
-                                    Text(
-                                      "Real: ${standing.realPercentage.toStringAsFixed(1)}% ($realGrade)",
-                                      style: TextStyle(fontSize: 14, color: Colors.grey.shade700),
-                                    ),
-                                  ],
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              ),
-                            );
-                          },
+                                final modeLabel = _transmutationMode == 'base50'
+                                    ? 'Base 50'
+                                    : _transmutationMode == 'base60'
+                                        ? 'Base 60'
+                                        : 'None';
+                                showKlaroInfoDialog(
+                                  context,
+                                  title: 'Grade Breakdown',
+                                  body:
+                                      'Projected: ${standing.projectedPercentage.toStringAsFixed(2)}%  →  $projectedGrade\n'
+                                      'Real:      ${standing.realPercentage.toStringAsFixed(2)}%  →  $realGrade\n'
+                                      'Transmutation: $modeLabel\n\n'
+                                      'Projected includes your ghost/goal assessments. '
+                                      'Real reflects only scores you have actually earned. '
+                                      'Both apply the same transmutation and weighting formula.',
+                                );
+                              },
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                             decoration: BoxDecoration(
@@ -381,22 +396,32 @@ class _CourseHeader extends ConsumerWidget {
                         // Standard View with info icon
                         GestureDetector(
                           onTap: () {
-                            // Show percentage tooltip
-                            showDialog(
-                              context: context,
-                              builder: (ctx) => AlertDialog(
-                                title: const Text("Grade Details"),
-                                content: Text(
-                                  "Percentage: ${standing.realPercentage.toStringAsFixed(1)}%\nGrade: $realGrade",
-                                  style: const TextStyle(fontSize: 16),
-                                ),
-                                actions: [
-                                  TextButton(
-                                    onPressed: () => Navigator.pop(ctx),
-                                    child: const Text("Close"),
-                                  ),
-                                ],
-                              ),
+                            final modeLabel = _transmutationMode == 'base50'
+                                ? 'Base 50'
+                                : _transmutationMode == 'base60'
+                                    ? 'Base 60'
+                                    : 'None';
+                            showKlaroInfoDialog(
+                              context,
+                              title: 'How is this grade computed?',
+                              body:
+                                  'Raw percentage: ${standing.realPercentage.toStringAsFixed(2)}%\n'
+                                  'Converted grade: $realGrade\n'
+                                  'Transmutation: $modeLabel\n\n'
+                                  'Each component\'s scores are pooled (sum of earned ÷ sum of total × 100) to get a raw %. '
+                                  'If transmutation is active, that raw % is raised using the formula below before being weighted. '
+                                  'Weighted component scores are then summed to give the course percentage, '
+                                  'which is converted to your grading system\'s scale.',
+                              formula: _transmutationMode == 'base50'
+                                  ? 'Transmuted = (raw / 100) × 50 + 50\n'
+                                    'Course %  = Σ(Transmuted Score × Weight)\n'
+                                    'Grade     = convert(Course %)'
+                                  : _transmutationMode == 'base60'
+                                      ? 'Transmuted = (raw / 100) × 60 + 40\n'
+                                        'Course %  = Σ(Transmuted Score × Weight)\n'
+                                        'Grade     = convert(Course %)'
+                                      : 'Course % = Σ(Raw Score × Weight)\n'
+                                        'Grade    = convert(Course %)',
                             );
                           },
                           child: Row(
@@ -478,8 +503,35 @@ class _CourseHeader extends ConsumerWidget {
             loading: () => const SizedBox.shrink(),
             error: (_, __) => const SizedBox.shrink(),
           ),
+          const SizedBox(height: 12),
+
+          // Status chip row
+          gradeAsync.when(
+            data: (standing) {
+              if (!standing.hasEnoughData) return const SizedBox.shrink();
+              final status = GradeDisplayHelper.getCourseStatus(
+                standing.realPercentage,
+                selectedSystem,
+              );
+              return Align(
+                alignment: Alignment.centerLeft,
+                child: _CourseStatusChip(status: status),
+              );
+            },
+            loading: () => const SizedBox.shrink(),
+            error: (_, __) => const SizedBox.shrink(),
+          ),
+
           const SizedBox(height: 16),
-          
+
+          // Transmutation mode selector
+          _TransmutationSelector(
+            current: _transmutationMode,
+            onChanged: _setTransmutationMode,
+          ),
+
+          const SizedBox(height: 16),
+
           // Goal Simulator Button
           componentsAsync.when(
             data: (components) {
@@ -548,6 +600,179 @@ class _CourseHeader extends ConsumerWidget {
             error: (_, __) => const SizedBox.shrink(),
           ),
         ],
+      ),
+    );
+  }
+}
+
+/// Status chip shown inside the course detail header.
+class _CourseStatusChip extends StatelessWidget {
+  final CourseStatus status;
+  const _CourseStatusChip({required this.status});
+
+  @override
+  Widget build(BuildContext context) {
+    if (status == CourseStatus.noData) return const SizedBox.shrink();
+
+    final Color color;
+    final String label;
+    final IconData icon;
+
+    if (status == CourseStatus.passing) {
+      color = const Color(0xFF4ADE80);
+      label = 'Passing';
+      icon  = PhosphorIcons.checkCircle();
+    } else if (status == CourseStatus.atRisk) {
+      color = const Color(0xFFFACC15);
+      label = 'At Risk — check your grade target';
+      icon  = PhosphorIcons.warning();
+    } else {
+      color = const Color(0xFFEF4444);
+      label = 'Failing — below passing threshold';
+      icon  = PhosphorIcons.xCircle();
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+      decoration: BoxDecoration(
+        color: color.withOpacity(0.12),
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withOpacity(0.35), width: 1),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 13, color: color),
+          const SizedBox(width: 5),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Pill-style transmutation mode selector shown inside the course detail header.
+///
+/// Transmutation raises the floor grade so a zero raw score doesn't produce
+/// a zero percentage. Common in Philippine private universities.
+///
+///   None (Base 0):  Transmuted = raw %
+///   Base 50:        Transmuted = (raw / 100) × 50 + 50
+///   Base 60:        Transmuted = (raw / 100) × 60 + 40
+class _TransmutationSelector extends StatelessWidget {
+  final String current;
+  final ValueChanged<String> onChanged;
+
+  const _TransmutationSelector({
+    required this.current,
+    required this.onChanged,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            Text(
+              'Transmutation',
+              style: TextStyle(
+                fontSize: 12,
+                fontWeight: FontWeight.w600,
+                color: Theme.of(context).textTheme.bodySmall?.color,
+              ),
+            ),
+            const SizedBox(width: 4),
+            GestureDetector(
+              onTap: () => showKlaroInfoDialog(
+                context,
+                title: 'What is transmutation?',
+                body:
+                    'Transmutation is used by many Philippine universities to raise the floor grade. '
+                    'Instead of a zero raw score producing a zero percentage, the minimum grade is set to 40, 50, or another floor value.\n\n'
+                    'This affects how your component scores are calculated before being weighted and converted to your final grade.\n\n'
+                    'Choose the mode your professor uses. When in doubt, check your course syllabus or ask your professor.',
+                formula:
+                    'None (Base 0):  Grade = raw %\n'
+                    'Base 50:        Grade = (raw / 100) × 50 + 50\n'
+                    'Base 60:        Grade = (raw / 100) × 60 + 40\n\n'
+                    'Example (raw score 70%):\n'
+                    '  None   → 70.0%\n'
+                    '  Base50 → 85.0%\n'
+                    '  Base60 → 82.0%',
+              ),
+              child: Icon(
+                PhosphorIcons.info(),
+                size: 14,
+                color: Colors.grey[400],
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 6),
+        Row(
+          children: [
+            _TransmutationPill(label: 'None',    value: 'none',   current: current, onTap: onChanged),
+            const SizedBox(width: 6),
+            _TransmutationPill(label: 'Base 50', value: 'base50', current: current, onTap: onChanged),
+            const SizedBox(width: 6),
+            _TransmutationPill(label: 'Base 60', value: 'base60', current: current, onTap: onChanged),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+class _TransmutationPill extends StatelessWidget {
+  final String label;
+  final String value;
+  final String current;
+  final ValueChanged<String> onTap;
+
+  const _TransmutationPill({
+    required this.label,
+    required this.value,
+    required this.current,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isSelected = value == current;
+    final primaryColor = Theme.of(context).colorScheme.primary;
+
+    return GestureDetector(
+      onTap: () => onTap(value),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: isSelected ? primaryColor.withOpacity(0.15) : Colors.transparent,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: isSelected ? primaryColor : Theme.of(context).dividerColor,
+            width: isSelected ? 1.5 : 1,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+            color: isSelected
+                ? primaryColor
+                : Theme.of(context).textTheme.bodySmall?.color,
+          ),
+        ),
       ),
     );
   }
