@@ -13,6 +13,7 @@ import 'package:klaro/features/course_management/presentation/widgets/component_
 import 'package:klaro/features/course_management/presentation/syllabus_upload_screen.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:klaro/core/widgets/info_dialog.dart';
+import 'package:klaro/features/dashboard/logic/drop_simulator_provider.dart';
 
 // Providers for components and assessments
 final courseComponentsProvider = StreamProvider.family<List<GradingComponent>, int>((ref, courseId) {
@@ -57,6 +58,16 @@ class CourseDetailScreen extends ConsumerWidget {
                 ),
               ),
               PopupMenuItem(
+                value: 'drop',
+                child: Row(
+                  children: [
+                    Icon(PhosphorIcons.prohibit(), size: 18, color: Colors.orange.shade700),
+                    const SizedBox(width: 8),
+                    Text("What if I drop?", style: TextStyle(color: Colors.orange.shade700)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
                 value: 'delete',
                 child: Row(
                   children: [
@@ -77,10 +88,11 @@ class CourseDetailScreen extends ConsumerWidget {
                   ),
                   builder: (ctx) => EditCourseModal(course: course),
                 );
-                // If edit was successful, we might want to refresh
                 if (result == true && context.mounted) {
-                  // The providers will auto-refresh via StreamProvider
+                  // providers auto-refresh via StreamProvider
                 }
+              } else if (value == 'drop') {
+                _showDropSimulator(context, ref, course.id);
               } else if (value == 'delete') {
                 _showDeleteConfirmation(context, ref);
               }
@@ -126,6 +138,120 @@ class CourseDetailScreen extends ConsumerWidget {
         label: const Text("Add Component"),
         icon: Icon(PhosphorIcons.plus()),
         backgroundColor: Theme.of(context).primaryColor,
+      ),
+    );
+  }
+
+  void _showDropSimulator(BuildContext context, WidgetRef ref, int courseId) {
+    final future = ref.read(dropSimulatorProvider(courseId).future);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        title: Row(
+          children: [
+            Icon(PhosphorIcons.prohibit(), size: 20, color: Colors.orange.shade700),
+            const SizedBox(width: 8),
+            const Expanded(child: Text("Drop Impact Simulator", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold))),
+          ],
+        ),
+        content: FutureBuilder<DropImpact>(
+          future: future,
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return const SizedBox(
+                height: 80,
+                child: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (!snapshot.hasData) {
+              return const Text("Unable to simulate drop impact.");
+            }
+            final impact = snapshot.data!;
+            final isLower = impact.isLowerBetter;
+
+            if (!impact.hasData) {
+              return Text(
+                "Not enough grade data to simulate dropping ${impact.courseCode} yet.",
+                style: const TextStyle(fontSize: 14),
+              );
+            }
+
+            final currentStr = impact.currentGwa?.toStringAsFixed(2) ?? '--';
+            final simStr = impact.simulatedGwa?.toStringAsFixed(2) ?? '--';
+            final improvement = impact.improvement;
+            final diffStr = improvement != null
+                ? '${improvement.abs().toStringAsFixed(2)} ${isLower ? 'GWA' : 'GPA'} points'
+                : '--';
+
+            final verdict = impact.dropHelps
+                ? 'Dropping would IMPROVE your GWA by $diffStr.'
+                : impact.dropHurts
+                    ? 'Dropping would WORSEN your GWA by $diffStr.'
+                    : 'Dropping would have no significant GWA impact.';
+
+            final verdictColor = impact.dropHelps
+                ? Colors.green.shade700
+                : impact.dropHurts
+                    ? Colors.red.shade700
+                    : Colors.grey.shade700;
+
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  "If you drop ${impact.courseCode} (${impact.courseUnits.toStringAsFixed(0)} units):",
+                  style: const TextStyle(fontSize: 13, height: 1.4),
+                ),
+                const SizedBox(height: 16),
+                Row(
+                  children: [
+                    _SimRow(label: "Current GWA", value: currentStr, color: Colors.grey.shade700),
+                    const SizedBox(width: 16),
+                    Icon(PhosphorIcons.arrowRight(), size: 18, color: Colors.grey[400]),
+                    const SizedBox(width: 16),
+                    _SimRow(
+                      label: "After Drop",
+                      value: simStr,
+                      color: impact.dropHelps ? Colors.green.shade700 : impact.dropHurts ? Colors.red.shade700 : Colors.grey.shade700,
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: verdictColor.withOpacity(0.08),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: verdictColor.withOpacity(0.25)),
+                  ),
+                  child: Text(
+                    verdict,
+                    style: TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w600,
+                      color: verdictColor,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isLower
+                      ? "Lower GWA is better in this system."
+                      : "Higher GPA is better in this system.",
+                  style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+                ),
+              ],
+            );
+          },
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Close"),
+          ),
+        ],
       ),
     );
   }
@@ -800,6 +926,36 @@ class _StatItem extends StatelessWidget {
     );
   }
 }
+/// ── Drop Simulator helper widget ──────────────────────────────────────────
+class _SimRow extends StatelessWidget {
+  final String label;
+  final String value;
+  final Color color;
+
+  const _SimRow({required this.label, required this.value, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Text(
+          value,
+          style: TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: color,
+          ),
+        ),
+        Text(
+          label,
+          style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+        ),
+      ],
+    );
+  }
+}
+
 // --- UPDATED TILE: Opens Assessment Modal ---
 class _GradingComponentTile extends ConsumerWidget {
   final GradingComponent component;

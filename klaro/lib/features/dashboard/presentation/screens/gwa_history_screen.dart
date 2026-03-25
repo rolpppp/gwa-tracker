@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:klaro/core/logic/grading_system.dart';
+import 'package:klaro/core/logic/latin_honors_helper.dart';
 import 'package:klaro/core/services/preferences_service.dart';
 import 'package:klaro/features/dashboard/logic/term_gwa_provider.dart';
 
@@ -34,6 +35,15 @@ class GwaHistoryScreen extends ConsumerWidget {
                     .where((s) => s.hasData)
                     .fold(0.0, (sum, s) => sum + s.totalUnits),
               ),
+
+              const SizedBox(height: 16),
+
+              // ── Latin Honors card ────────────────────────────────────────
+              if (cumulativeGwa != null)
+                _LatinHonorsCard(
+                  gwa: cumulativeGwa!,
+                  gradingSystem: selectedSystem,
+                ),
 
               const SizedBox(height: 20),
 
@@ -372,6 +382,190 @@ class _InfoChip extends StatelessWidget {
             label,
             style: TextStyle(fontSize: 11, color: Colors.grey[700]),
           ),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Latin Honors Card ──────────────────────────────────────────────────────
+
+class _LatinHonorsCard extends StatelessWidget {
+  final double gwa;
+  final String gradingSystem;
+
+  const _LatinHonorsCard({required this.gwa, required this.gradingSystem});
+
+  @override
+  Widget build(BuildContext context) {
+    final currentTier = LatinHonorsHelper.getCurrentTier(gwa, gradingSystem);
+    final nextTier = LatinHonorsHelper.getNextTier(gwa, gradingSystem);
+    final progress = LatinHonorsHelper.progressToNextTier(gwa, gradingSystem);
+    final tiers = LatinHonorsHelper.getTiers(gradingSystem);
+
+    final accentColor = currentTier != null
+        ? const Color(0xFFD97706) // amber — honors gold
+        : Colors.grey.shade500;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: accentColor.withOpacity(0.06),
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: accentColor.withOpacity(0.25)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
+            children: [
+              Icon(PhosphorIcons.medal(), size: 16, color: accentColor),
+              const SizedBox(width: 8),
+              Text(
+                "Latin Honors Progress",
+                style: TextStyle(
+                  fontSize: 13,
+                  fontWeight: FontWeight.bold,
+                  color: accentColor,
+                ),
+              ),
+              const Spacer(),
+              Text(
+                "Representative thresholds",
+                style:
+                    TextStyle(fontSize: 10, color: Colors.grey[500]),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+
+          // Current status badge
+          Container(
+            padding:
+                const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+            decoration: BoxDecoration(
+              color: currentTier != null
+                  ? accentColor.withOpacity(0.15)
+                  : Colors.grey.withOpacity(0.1),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            child: Text(
+              currentTier != null
+                  ? '${currentTier.name} — currently qualifying'
+                  : 'Not yet qualifying for Latin honors',
+              style: TextStyle(
+                fontSize: 13,
+                fontWeight: FontWeight.w600,
+                color: currentTier != null ? accentColor : Colors.grey[600],
+              ),
+            ),
+          ),
+
+          // Progress toward next tier
+          if (nextTier != null) ...[
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Next: ${nextTier.name}",
+                  style: TextStyle(
+                      fontSize: 12, color: Colors.grey[700]),
+                ),
+                Text(
+                  "${nextTier.threshold.toStringAsFixed(2)} "
+                  "${gradingSystem == '5Point' ? 'GWA or lower' : 'GPA or higher'}",
+                  style: TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.grey[700]),
+                ),
+              ],
+            ),
+            const SizedBox(height: 6),
+            ClipRRect(
+              borderRadius: BorderRadius.circular(3),
+              child: LinearProgressIndicator(
+                value: progress ?? 0,
+                minHeight: 6,
+                backgroundColor: Colors.grey.shade200,
+                valueColor:
+                    AlwaysStoppedAnimation<Color>(accentColor),
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              progress != null
+                  ? '${(progress * 100).toStringAsFixed(0)}% of the way there'
+                  : '',
+              style: TextStyle(fontSize: 11, color: Colors.grey[500]),
+            ),
+          ] else ...[
+            const SizedBox(height: 8),
+            Text(
+              'You have reached the highest honor tier!',
+              style: TextStyle(
+                  fontSize: 12,
+                  color: accentColor,
+                  fontWeight: FontWeight.w600),
+            ),
+          ],
+
+          const SizedBox(height: 14),
+          const Divider(height: 1),
+          const SizedBox(height: 10),
+
+          // All tiers mini-table
+          ...tiers.map((tier) {
+            final qualifies = tier.qualifies(gwa);
+            final isCurrent = currentTier?.name == tier.name;
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: Row(
+                children: [
+                  Icon(
+                    isCurrent
+                        ? PhosphorIcons.checkCircle()
+                        : qualifies
+                            ? PhosphorIcons.checkCircle()
+                            : PhosphorIcons.circle(),
+                    size: 14,
+                    color: qualifies ? accentColor : Colors.grey[400],
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      tier.name,
+                      style: TextStyle(
+                        fontSize: 12,
+                        fontWeight: isCurrent
+                            ? FontWeight.bold
+                            : FontWeight.normal,
+                        color: qualifies
+                            ? Colors.grey[800]
+                            : Colors.grey[400],
+                      ),
+                    ),
+                  ),
+                  Text(
+                    gradingSystem == '5Point'
+                        ? '≤ ${tier.threshold.toStringAsFixed(2)}'
+                        : '≥ ${tier.threshold.toStringAsFixed(2)}',
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: qualifies
+                          ? Colors.grey[700]
+                          : Colors.grey[400],
+                      fontWeight: isCurrent
+                          ? FontWeight.bold
+                          : FontWeight.normal,
+                    ),
+                  ),
+                ],
+              ),
+            );
+          }),
         ],
       ),
     );

@@ -15,6 +15,7 @@ import 'package:klaro/core/widgets/info_dialog.dart';
 import 'package:klaro/features/dashboard/logic/scholarship_provider.dart';
 import 'package:klaro/core/services/notification_service.dart';
 import 'package:klaro/features/dashboard/presentation/screens/gwa_history_screen.dart';
+import 'package:klaro/features/dashboard/logic/probation_provider.dart';
 
 // State for toggling between Real/Projected GWA
 final showRealGwaProvider = NotifierProvider<ShowRealGwaNotifier, bool>(
@@ -61,6 +62,7 @@ class DashboardScreen extends ConsumerWidget {
     });
 
     final scholarshipStatus = ref.watch(scholarshipStatusProvider);
+    final probationRisk = ref.watch(probationRiskProvider).value;
 
     return Scaffold(
       body: CustomScrollView(
@@ -310,6 +312,12 @@ class DashboardScreen extends ConsumerWidget {
               child: _ScholarshipBanner(status: scholarshipStatus),
             ),
 
+          // Academic probation risk banner
+          if (probationRisk != null && probationRisk.hasWarnings)
+            SliverToBoxAdapter(
+              child: _ProbationRiskBanner(risk: probationRisk),
+            ),
+
           // Semester Stats Section
           SliverToBoxAdapter(child: _SemesterStatsWidget()),
 
@@ -508,6 +516,76 @@ class _ScholarshipBanner extends StatelessWidget {
               children: [
                 Text(
                   isCritical ? 'Scholarship at Risk' : 'GWA Approaching Limit',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: color,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  body,
+                  style: TextStyle(fontSize: 12, color: color),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _ProbationRiskBanner extends StatelessWidget {
+  final ProbationRisk risk;
+
+  const _ProbationRiskBanner({required this.risk});
+
+  @override
+  Widget build(BuildContext context) {
+    final isProbation = risk.isProbationRisk;
+    final color = isProbation ? Colors.red.shade700 : Colors.orange.shade700;
+    final bgColor =
+        isProbation ? Colors.red.shade50 : Colors.orange.shade50;
+
+    final allAtRisk = [
+      ...risk.failingCourseNames,
+      ...risk.atRiskCourseNames,
+    ];
+    final courseList = allAtRisk.take(3).join(', ') +
+        (allAtRisk.length > 3 ? '…' : '');
+
+    final body = isProbation
+        ? '${risk.failingCount} course${risk.failingCount > 1 ? 's are' : ' is'} currently failing ($courseList). You may be at risk of academic probation.'
+        : '${risk.totalAtRisk} course${risk.totalAtRisk > 1 ? 's' : ''} ${risk.totalAtRisk > 1 ? 'are' : 'is'} at risk or failing ($courseList). Act now to improve your standing.';
+
+    return Container(
+      margin: const EdgeInsets.fromLTRB(16, 4, 16, 4),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: bgColor,
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: color.withOpacity(0.5)),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Icon(
+            isProbation
+                ? PhosphorIcons.prohibit()
+                : PhosphorIcons.warning(),
+            size: 20,
+            color: color,
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isProbation
+                      ? 'Academic Probation Risk'
+                      : 'Courses Need Attention',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 13,
