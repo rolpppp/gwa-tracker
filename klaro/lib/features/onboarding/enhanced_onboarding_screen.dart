@@ -301,9 +301,8 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.blue[50],
+              color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.blue[200]!),
             ),
             child: Row(
               children: [
@@ -439,7 +438,7 @@ class _EnhancedOnboardingScreenState extends ConsumerState<EnhancedOnboardingScr
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withOpacity(0.3), width: 1.5),
+        border: Border.all(color: color.withOpacity(0.15), width: 1.5),
       ),
       child: Row(
         children: [
@@ -643,7 +642,7 @@ class _CustomGradingSystemCard extends StatelessWidget {
         decoration: BoxDecoration(
           color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.5),
           border: Border.all(
-            color: Theme.of(context).dividerColor.withOpacity(0.3),
+            color: Theme.of(context).dividerColor.withOpacity(0.15),
             width: 1.5,
             style: BorderStyle.solid,
           ),
@@ -768,7 +767,7 @@ class _TransmutationInfoTileState extends State<_TransmutationInfoTile> {
       decoration: BoxDecoration(
         color: Theme.of(context).colorScheme.surfaceContainerHighest.withOpacity(0.6),
         borderRadius: BorderRadius.circular(14),
-        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.4)),
+        border: Border.all(color: Theme.of(context).dividerColor.withOpacity(0.15)),
       ),
       child: Column(
         children: [
@@ -971,12 +970,9 @@ class _GradingSystemCard extends StatelessWidget {
           color: isSelected 
               ? Theme.of(context).primaryColor.withOpacity(0.08) 
               : Theme.of(context).colorScheme.surfaceContainerHighest,
-          border: Border.all(
-            color: isSelected 
-                ? Theme.of(context).primaryColor 
-                : Theme.of(context).dividerColor.withOpacity(0.5),
-            width: isSelected ? 2.5 : 1.5,
-          ),
+          border: isSelected
+              ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.8), width: 2.5)
+              : null,
           borderRadius: BorderRadius.circular(20),
           boxShadow: isSelected
               ? [
@@ -1063,8 +1059,8 @@ class _GradingSystemCard extends StatelessWidget {
                           borderRadius: BorderRadius.circular(4),
                           border: Border.all(
                             color: isSelected
-                                ? Theme.of(context).primaryColor.withOpacity(0.3)
-                                : Theme.of(context).dividerColor,
+                                ? Theme.of(context).colorScheme.primary.withOpacity(0.15)
+                                : Theme.of(context).dividerColor.withOpacity(0.15),
                           ),
                         ),
                         child: Text(

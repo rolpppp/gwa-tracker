@@ -118,7 +118,7 @@ class _CumulativeGwaCard extends StatelessWidget {
           ],
         ),
         borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: primary.withOpacity(0.25)),
+        border: Border.all(color: primary.withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -370,7 +370,7 @@ class _InfoChip extends StatelessWidget {
         color: Colors.white.withOpacity(0.5),
         borderRadius: BorderRadius.circular(6),
         border: Border.all(
-          color: Theme.of(context).dividerColor.withOpacity(0.3),
+          color: Theme.of(context).dividerColor.withOpacity(0.15),
         ),
       ),
       child: Row(
@@ -412,7 +412,7 @@ class _LatinHonorsCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: accentColor.withOpacity(0.06),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: accentColor.withOpacity(0.25)),
+        border: Border.all(color: accentColor.withOpacity(0.15)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

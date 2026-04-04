@@ -3,16 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/database.dart';
 import 'package:klaro/core/logic/grade_display_helper.dart';
 import 'package:klaro/core/services/preferences_service.dart';
+import 'package:klaro/features/course_management/logic/course_grade_provider.dart';
+import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 
 class ComponentSimulatorModal extends ConsumerStatefulWidget {
   final int courseId;
-  final double currentPercentage;
+  final CourseStanding standing;
 
   const ComponentSimulatorModal({
     super.key,
     required this.courseId,
-    required this.currentPercentage,
+    required this.standing,
   });
 
   @override
@@ -23,7 +25,8 @@ class ComponentSimulatorModal extends ConsumerStatefulWidget {
 class _ComponentSimulatorModalState
     extends ConsumerState<ComponentSimulatorModal> {
   List<GradingComponent> _components = [];
-  Map<int, double> _simulatedScores = {}; // componentId -> simulated percentage
+  Map<int, double> _simulatedScores = {};
+  TransmutationMode _transmutationMode = TransmutationMode.none;
   bool _isLoading = true;
 
   @override
@@ -34,13 +37,17 @@ class _ComponentSimulatorModalState
 
   Future<void> _loadComponents() async {
     final db = ref.read(databaseProvider);
+
+    final course = await (db.select(db.courses)
+      ..where((c) => c.id.equals(widget.courseId))).getSingleOrNull();
+
     final components = await (db.select(
       db.gradingComponents,
     )..where((c) => c.courseId.equals(widget.courseId))).get();
 
     setState(() {
+      _transmutationMode = GradeCalculator.parseMode(course?.transmutationMode ?? 'none');
       _components = components;
-      // Initialize all components with 85% default
       for (var comp in components) {
         _simulatedScores[comp.id] = 85.0;
       }
@@ -49,18 +56,19 @@ class _ComponentSimulatorModalState
   }
 
   double _calculateProjectedPercentage() {
-    if (_components.isEmpty) return widget.currentPercentage;
+    if (_components.isEmpty) return widget.standing.realPercentage;
 
     double totalWeightedScore = 0.0;
     double totalWeight = 0.0;
 
     for (var component in _components) {
-      final simulatedScore = _simulatedScores[component.id] ?? 85.0;
-      totalWeightedScore += simulatedScore * component.weightPercent;
+      final rawScore = _simulatedScores[component.id] ?? 85.0;
+      final transmutedScore = GradeCalculator.applyTransmutation(rawScore, _transmutationMode);
+      totalWeightedScore += transmutedScore * component.weightPercent;
       totalWeight += component.weightPercent;
     }
 
-    if (totalWeight == 0) return widget.currentPercentage;
+    if (totalWeight == 0) return widget.standing.realPercentage;
     return totalWeightedScore / totalWeight;
   }
 
@@ -111,8 +119,8 @@ class _ComponentSimulatorModalState
     final db = ref.watch(databaseProvider);
 
     // Compare raw percentages — higher % = better, regardless of grading system
-    final isImproving = projectedPercentage > widget.currentPercentage;
-    final isDeclining = projectedPercentage < widget.currentPercentage;
+    final isImproving = projectedPercentage > widget.standing.realPercentage;
+    final isDeclining = projectedPercentage < widget.standing.realPercentage;
 
     return FutureBuilder<String>(
       future: GradeDisplayHelper.formatGradeAsync(
@@ -176,28 +184,33 @@ class _ComponentSimulatorModalState
               Row(
                 children: [
                   Expanded(
-                    child: FutureBuilder<String>(
-                      future: GradeDisplayHelper.formatGradeAsync(
-                        widget.currentPercentage,
-                        selectedSystem,
-                        db,
-                      ),
-                      builder: (context, snapshot) {
-                        return _GradeCard(
-                          label: "Current",
-                          grade:
-                              snapshot.data ??
-                              widget.currentPercentage.toStringAsFixed(2),
-                          percentage: widget.currentPercentage,
-                          color: Color(
-                            GradeDisplayHelper.getGradeColorForSystem(
-                              widget.currentPercentage,
+                    child: widget.standing.hasEnoughData
+                        ? FutureBuilder<String>(
+                            future: GradeDisplayHelper.formatGradeAsync(
+                              widget.standing.realPercentage,
                               selectedSystem,
+                              db,
                             ),
+                            builder: (context, snapshot) {
+                              return _GradeCard(
+                                label: "Current",
+                                grade: snapshot.data ?? widget.standing.realGrade.toStringAsFixed(2),
+                                percentage: widget.standing.realPercentage,
+                                color: Color(
+                                  GradeDisplayHelper.getGradeColorForSystem(
+                                    widget.standing.realPercentage,
+                                    selectedSystem,
+                                  ),
+                                ),
+                              );
+                            },
+                          )
+                        : _GradeCard(
+                            label: "Current",
+                            grade: "--",
+                            percentage: widget.standing.realPercentage,
+                            color: Colors.grey,
                           ),
-                        );
-                      },
-                    ),
                   ),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
@@ -239,11 +252,8 @@ class _ComponentSimulatorModalState
                         Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
+                            color: Theme.of(context).colorScheme.surfaceContainerLowest,
                             borderRadius: BorderRadius.circular(16),
-                            border: Border.all(
-                              color: Theme.of(context).dividerColor,
-                            ),
                           ),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
@@ -457,7 +467,7 @@ class _GradeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withOpacity(0.15)),
       ),
       child: Column(
         children: [
@@ -505,17 +515,12 @@ class _PresetButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return OutlinedButton(
+    return ActionChip(
       onPressed: onTap,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        side: BorderSide(color: Theme.of(context).primaryColor),
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      ),
-      child: Text(
-        label,
-        style: TextStyle(fontSize: 12, color: Theme.of(context).primaryColor),
-      ),
+      label: Text(label, style: const TextStyle(fontSize: 12)),
+      backgroundColor: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.3),
+      side: BorderSide.none,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
     );
   }
 }

@@ -144,9 +144,8 @@ class _GoalSimulatorModalState extends State<GoalSimulatorModal> {
           Container(
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.grey[50],
+              color: Theme.of(context).colorScheme.surfaceContainerLowest,
               borderRadius: BorderRadius.circular(16),
-              border: Border.all(color: Colors.grey[200]!),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -300,10 +299,9 @@ class _GradeCard extends StatelessWidget {
       decoration: BoxDecoration(
         color: isHighlight ? color.withOpacity(0.1) : Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(
-          color: isHighlight ? color.withOpacity(0.4) : Theme.of(context).dividerColor,
-          width: isHighlight ? 2 : 1,
-        ),
+        border: isHighlight
+            ? Border.all(color: color.withOpacity(0.15), width: 2)
+            : null,
       ),
       child: Column(
         children: [
@@ -369,7 +367,7 @@ class _PresetButton extends StatelessWidget {
           child: Container(
             padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
-              border: Border.all(color: Theme.of(context).dividerColor),
+              color: Theme.of(context).colorScheme.surfaceContainerHighest,
               borderRadius: BorderRadius.circular(8),
             ),
             child: Center(

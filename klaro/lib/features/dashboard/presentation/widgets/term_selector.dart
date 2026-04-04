@@ -32,7 +32,7 @@ class TermSelector extends ConsumerWidget {
                   color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                   borderRadius: BorderRadius.circular(12),
                   border: Border.all(
-                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.3),
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                     width: 1,
                   ),
                 ),

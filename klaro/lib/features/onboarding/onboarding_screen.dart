@@ -129,11 +129,12 @@ class _SystemCard extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? Theme.of(context).primaryColor.withOpacity(0.05) : Colors.grey[50],
-          border: Border.all(
-            color: isSelected ? Theme.of(context).primaryColor : Colors.grey[200]!,
-            width: 2,
-          ),
+          color: isSelected
+              ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.25)
+              : Theme.of(context).colorScheme.surfaceContainerLowest,
+          border: isSelected
+              ? Border.all(color: Theme.of(context).colorScheme.primary.withOpacity(0.8), width: 2)
+              : null,
           borderRadius: BorderRadius.circular(16),
         ),
         child: Row(

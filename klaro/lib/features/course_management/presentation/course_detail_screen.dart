@@ -224,7 +224,7 @@ class CourseDetailScreen extends ConsumerWidget {
                   decoration: BoxDecoration(
                     color: verdictColor.withOpacity(0.08),
                     borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: verdictColor.withOpacity(0.25)),
+                    border: Border.all(color: verdictColor.withOpacity(0.15)),
                   ),
                   child: Text(
                     verdict,
@@ -486,7 +486,7 @@ class _CourseHeaderState extends ConsumerState<_CourseHeader> {
                             decoration: BoxDecoration(
                               color: Theme.of(context).colorScheme.secondary.withOpacity(0.1),
                               borderRadius: BorderRadius.circular(8),
-                              border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.3)),
+                              border: Border.all(color: Theme.of(context).colorScheme.secondary.withOpacity(0.15)),
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -592,11 +592,11 @@ class _CourseHeaderState extends ConsumerState<_CourseHeader> {
                     Container(
                       padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
-                        color: standing.hasEnoughData ? Colors.blue[50] : Colors.orange[50],
+                        color: standing.hasEnoughData
+                            ? Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2)
+                            : Theme.of(context).colorScheme.tertiaryContainer?.withOpacity(0.3) ??
+                              Colors.orange[50],
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: standing.hasEnoughData ? Colors.blue[200]! : Colors.orange[200]!,
-                        ),
                       ),
                       child: Row(
                         children: [
@@ -665,14 +665,10 @@ class _CourseHeaderState extends ConsumerState<_CourseHeader> {
               return Container(
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: isDark 
-                        ? [Colors.purple.shade900.withOpacity(0.5), Colors.blue.shade900.withOpacity(0.5)]
-                        : [Colors.purple.shade50, Colors.blue.shade50],
-                  ),
+                  color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(isDark ? 0.2 : 0.15),
                   borderRadius: BorderRadius.circular(16),
                   border: Border.all(
-                    color: isDark ? Colors.purple.shade700 : Colors.purple.shade200
+                    color: Theme.of(context).colorScheme.secondary.withOpacity(0.15),
                   ),
                 ),
                 child: Material(
@@ -691,7 +687,7 @@ class _CourseHeaderState extends ConsumerState<_CourseHeader> {
                           ),
                           builder: (ctx) => ComponentSimulatorModal(
                             courseId: course.id,
-                            currentPercentage: standingValue.realPercentage,
+                            standing: standingValue,
                           ),
                         );
                       }
@@ -763,7 +759,7 @@ class _CourseStatusChip extends StatelessWidget {
       decoration: BoxDecoration(
         color: color.withOpacity(0.12),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withOpacity(0.35), width: 1),
+        border: Border.all(color: color.withOpacity(0.15), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -885,7 +881,7 @@ class _TransmutationPill extends StatelessWidget {
           color: isSelected ? primaryColor.withOpacity(0.15) : Colors.transparent,
           borderRadius: BorderRadius.circular(8),
           border: Border.all(
-            color: isSelected ? primaryColor : Theme.of(context).dividerColor,
+            color: isSelected ? primaryColor.withOpacity(0.8) : Theme.of(context).dividerColor.withOpacity(0.15),
             width: isSelected ? 1.5 : 1,
           ),
         ),

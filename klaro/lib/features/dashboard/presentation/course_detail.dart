@@ -28,10 +28,10 @@ class CourseDetailScreen extends ConsumerWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(PhosphorIcons.arrowLeft(), color: Colors.black),
+          icon: Icon(PhosphorIcons.arrowLeft()),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(course.code, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+        title: Text(course.code, style: const TextStyle(fontWeight: FontWeight.bold)),
         actions: [
           IconButton(icon: Icon(PhosphorIcons.dotsThreeVertical()), onPressed: () {})
         ],
@@ -114,7 +114,7 @@ class CourseDetailScreen extends ConsumerWidget {
         Text(value, style: TextStyle(
           fontSize: 24, 
           fontWeight: FontWeight.bold, 
-          color: isColor ? const Color(0xFF4ADE80) : Colors.black
+          color: isColor ? const Color(0xFF4ADE80) : const Color(0xFF191C1E)
         )),
       ],
     );

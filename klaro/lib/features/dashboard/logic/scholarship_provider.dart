@@ -58,23 +58,24 @@ final scholarshipStatusProvider = Provider<ScholarshipStatus?>((ref) {
   );
 });
 
-/// Approaching but not yet crossed the threshold (within 10% of threshold value).
+/// Approaching but not yet crossed the threshold (within 0.25 grade points).
+/// Mutually exclusive with [_isCritical] — only one can be true at a time.
 bool _isAtRisk(double gwa, double threshold, String system) {
-  final margin = threshold * 0.10;
+  const margin = 0.25;
   if (system == '5Point') {
-    // Lower is better: at risk when GWA is getting close to (or above) threshold
-    return gwa >= (threshold - margin);
+    // Lower is better: at risk when GWA is within margin BELOW the threshold
+    return gwa >= (threshold - margin) && gwa < threshold;
   } else {
-    // Higher is better: at risk when GWA is getting close to (or below) threshold
-    return gwa <= (threshold + margin);
+    // Higher is better: at risk when GWA is within margin ABOVE the threshold
+    return gwa > threshold && gwa <= (threshold + margin);
   }
 }
 
-/// Has already crossed the threshold (scholarship requirement violated).
+/// Has already crossed (or reached) the threshold — scholarship requirement violated.
 bool _isCritical(double gwa, double threshold, String system) {
   if (system == '5Point') {
-    return gwa > threshold;
+    return gwa >= threshold;
   } else {
-    return gwa < threshold;
+    return gwa <= threshold;
   }
 }

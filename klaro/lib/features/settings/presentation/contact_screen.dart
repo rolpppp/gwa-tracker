@@ -2,411 +2,165 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:phosphor_flutter/phosphor_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:package_info_plus/package_info_plus.dart';
 
-class ContactScreen extends StatelessWidget {
+class ContactScreen extends StatefulWidget {
   const ContactScreen({super.key});
 
   @override
+  State<ContactScreen> createState() => _ContactScreenState();
+}
+
+class _ContactScreenState extends State<ContactScreen> {
+  PackageInfo? _packageInfo;
+
+  @override
+  void initState() {
+    super.initState();
+    PackageInfo.fromPlatform().then((info) {
+      if (mounted) setState(() => _packageInfo = info);
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final cs = Theme.of(context).colorScheme;
+
     return Scaffold(
+      backgroundColor: cs.surface,
       appBar: AppBar(
         title: const Text("Contact & Support"),
         backgroundColor: Colors.transparent,
         elevation: 0,
       ),
       body: ListView(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(24),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).primaryColor,
-                  Theme.of(context).primaryColor.withOpacity(0.7),
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-              borderRadius: BorderRadius.circular(16),
-            ),
-            child: Column(
-              children: [
-                Icon(
-                  PhosphorIcons.chatCircleDots(),
-                  size: 64,
-                  color: Colors.white,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  "We'd Love to Hear from You!",
-                  style: TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "Whether it's support, feedback, or just saying hi",
-                  style: TextStyle(
-                    fontSize: 14,
-                    color: Colors.white.withOpacity(0.9),
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-              ],
-            ),
+          _SectionLabel(label: "Get Support"),
+          _Tile(
+            icon: PhosphorIcons.envelope(PhosphorIconsStyle.duotone),
+            iconColor: cs.primary,
+            title: "Email Support",
+            subtitle: "app.klaro@gmail.com",
+            onTap: () => _launchEmail(context, 'app.klaro@gmail.com'),
           ),
-          const SizedBox(height: 24),
-
-          // Support Section
-          _buildSection(
-            context,
-            title: "Get Support",
-            icon: PhosphorIcons.lifebuoy(),
-            iconColor: Colors.blue,
-            children: [
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.envelope(),
-                title: "Email Support",
-                subtitle: "app.klaro@gmail.com",
-                onTap: () => _launchEmail(context, 'app.klaro@gmail.com'),
-              ),
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.discordLogo(),
-                title: "Join Discord Community",
-                subtitle: "Get help from other students",
-                onTap: () => _launchUrl('https://discord.gg/klaro'),
-              ),
-            ],
+          _Tile(
+            icon: PhosphorIcons.discordLogo(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFF5865F2),
+            title: "Discord Community",
+            subtitle: "Get help from other students",
+            onTap: () => _launchUrl('https://discord.gg/klaro'),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 22),
 
-          // Feedback Section
-          _buildSection(
-            context,
-            title: "Send Feedback",
-            icon: PhosphorIcons.megaphone(),
-            iconColor: Colors.orange,
-            children: [
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.bug(),
-                title: "Report a Bug",
-                subtitle: "Help us improve Klaro",
-                onTap: () => _launchEmail(
-                  context,
-                  'app.klaro@gmail.com',
-                  subject: 'Bug Report',
-                ),
-              ),
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.lightbulb(),
-                title: "Feature Request",
-                subtitle: "Share your ideas with us",
-                onTap: () => _launchEmail(
-                  context,
-                  'app.klaro@gmail.com',
-                  subject: 'Feature Request',
-                ),
-              ),
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.graduationCap(),
-                title: "Request Grading Preset",
-                subtitle: "Add your university's grading system",
-                onTap: () => _launchEmail(
-                  context,
-                  'app.klaro@gmail.com',
-                  subject: 'Grading System Preset Request',
-                ),
-              ),
-            ],
+          _SectionLabel(label: "Send Feedback"),
+          _Tile(
+            icon: PhosphorIcons.bug(PhosphorIconsStyle.duotone),
+            iconColor: cs.error,
+            title: "Bug Reports",
+            subtitle: "Help us improve Klaro",
+            onTap: () => _launchEmail(context, 'app.klaro@gmail.com', subject: 'Bug Report'),
           ),
-          const SizedBox(height: 16),
-
-          // Support Us Section
-          _buildSection(
-            context,
-            title: "Support Us",
-            icon: PhosphorIcons.heart(),
-            iconColor: Colors.red,
-            children: [
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.coffee(),
-                title: "Buy Me a Coffee",
-                subtitle: "Support via Ko-fi ☕",
-                onTap: () => _showDonationOptionsDialog(context),
-              ),
-              _buildContactTile(
-                context,
-                icon: PhosphorIcons.star(),
-                title: "Rate on App Store",
-                subtitle: "Leave a review and help us grow",
-                onTap: () => _showRateDialog(context),
-              ),
-            ],
+          _Tile(
+            icon: PhosphorIcons.lightbulb(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFFF59E0B),
+            title: "Feature Requests",
+            subtitle: "Share your ideas with us",
+            onTap: () => _launchEmail(context, 'app.klaro@gmail.com', subject: 'Feature Request'),
           ),
-          const SizedBox(height: 16),
-
-          // Social Media Section
-          _buildSection(
-            context,
-            title: "Follow Us",
-            icon: PhosphorIcons.shareNetwork(),
-            iconColor: Colors.purple,
-            children: [
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceAround,
-                  children: [
-                    _buildSocialButton(
-                      context,
-                      icon: PhosphorIcons.twitterLogo(),
-                      label: "Twitter",
-                      color: const Color(0xFF1DA1F2),
-                      onTap: () => _launchUrl('https://twitter.com/klaroapp'),
-                    ),
-                    _buildSocialButton(
-                      context,
-                      icon: PhosphorIcons.instagramLogo(),
-                      label: "Instagram",
-                      color: const Color(0xFFE4405F),
-                      onTap: () => _launchUrl('https://instagram.com/klaroapp'),
-                    ),
-                    _buildSocialButton(
-                      context,
-                      icon: PhosphorIcons.githubLogo(),
-                      label: "GitHub",
-                      color: const Color(0xFF333333),
-                      onTap: () => _launchUrl('https://github.com/rolpppp'),
-                    ),
-                  ],
-                ),
-              ),
-            ],
+          _Tile(
+            icon: PhosphorIcons.graduationCap(PhosphorIconsStyle.duotone),
+            iconColor: cs.secondary,
+            title: "Grading Presets",
+            subtitle: "Add your university's grading system",
+            onTap: () => _launchEmail(context, 'app.klaro@gmail.com', subject: 'Grading System Preset Request'),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 22),
 
-          // Footer
+          _SectionLabel(label: "Support Us"),
+          _Tile(
+            icon: PhosphorIcons.coffee(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFF13C3FF),
+            title: "Buy Me a Coffee",
+            subtitle: "Support via Ko-fi or GCash ☕",
+            onTap: () => _showDonationOptionsDialog(context),
+          ),
+          _Tile(
+            icon: PhosphorIcons.star(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFFF59E0B),
+            title: "Rate on App Store",
+            subtitle: "Leave a review and help us grow",
+            onTap: () => _showRateDialog(context),
+          ),
+          const SizedBox(height: 22),
+
+          _SectionLabel(label: "Follow Us"),
+          _Tile(
+            icon: PhosphorIcons.twitterLogo(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFF1DA1F2),
+            title: "Twitter",
+            subtitle: "@klaroapp",
+            onTap: () => _launchUrl('https://twitter.com/klaroapp'),
+          ),
+          _Tile(
+            icon: PhosphorIcons.instagramLogo(PhosphorIconsStyle.duotone),
+            iconColor: const Color(0xFFE4405F),
+            title: "Instagram",
+            subtitle: "@klaroapp",
+            onTap: () => _launchUrl('https://instagram.com/klaroapp'),
+          ),
+          _Tile(
+            icon: PhosphorIcons.githubLogo(PhosphorIconsStyle.duotone),
+            iconColor: cs.onSurfaceVariant,
+            title: "GitHub",
+            subtitle: "github.com/rolpppp",
+            onTap: () => _launchUrl('https://github.com/rolpppp'),
+          ),
+          const SizedBox(height: 32),
+
           Center(
-            child: Column(
-              children: [
-                Text(
-                  "Made with ❤️ for students",
-                  style: TextStyle(
-                    color: Colors.grey[600],
-                    fontSize: 14,
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Text(
-                  "© 2026 Klaro. All rights reserved.",
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
-                ),
-              ],
+            child: Text(
+              "v${_packageInfo?.version ?? '—'}  •  Made with ❤️ for students",
+              style: Theme.of(context).textTheme.bodySmall,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
         ],
       ),
     );
   }
 
-  Widget _buildSection(
-    BuildContext context, {
-    required String title,
-    required IconData icon,
-    required Color iconColor,
-    required List<Widget> children,
-  }) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
-          child: Row(
-            children: [
-              Icon(icon, size: 20, color: iconColor),
-              const SizedBox(width: 8),
-              Text(
-                title,
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.grey[800],
-                ),
-              ),
-            ],
-          ),
-        ),
-        Card(
-          child: Column(
-            children: children,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildContactTile(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      leading: Container(
-        padding: const EdgeInsets.all(8),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor.withOpacity(0.1),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        child: Icon(icon, size: 24, color: Theme.of(context).primaryColor),
-      ),
-      title: Text(
-        title,
-        style: const TextStyle(fontWeight: FontWeight.w600),
-      ),
-      subtitle: Text(
-        subtitle,
-        style: const TextStyle(fontSize: 13),
-      ),
-      trailing: Icon(PhosphorIcons.caretRight(), size: 20),
-      onTap: onTap,
-    );
-  }
-
-  Widget _buildSocialButton(
-    BuildContext context, {
-    required IconData icon,
-    required String label,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Expanded(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 4),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(16),
-            child: Container(
-              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 8),
-              decoration: BoxDecoration(
-                color: Theme.of(context).cardColor,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(
-                  color: Theme.of(context).dividerColor.withOpacity(0.2),
-                ),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-                    blurRadius: 8,
-                    offset: const Offset(0, 2),
-                  ),
-                ],
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Icon(icon, size: 28, color: color),
-                  ),
-                  const SizedBox(height: 12),
-                  Text(
-                    label,
-                    style: TextStyle(
-                      fontSize: 13,
-                      color: Theme.of(context).textTheme.bodyLarge?.color,
-                      fontWeight: FontWeight.w600,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-  }
+  // ── helpers ──────────────────────────────────────────────────────────────
 
   Future<void> _launchEmail(BuildContext context, String email, {String? subject}) async {
-    final Uri emailUri = Uri(
+    final uri = Uri(
       scheme: 'mailto',
       path: email,
       query: subject != null ? 'subject=${Uri.encodeComponent(subject)}' : null,
     );
-    
     try {
-      // Try to launch with external application mode
-      final launched = await launchUrl(
-        emailUri,
-        mode: LaunchMode.externalApplication,
-      );
-      
-      if (!launched) {
-        // Fallback: copy email to clipboard
+      final launched = await launchUrl(uri, mode: LaunchMode.externalApplication);
+      if (!launched && context.mounted) {
         await Clipboard.setData(ClipboardData(text: email));
-        if (context.mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text('No email app found. Email copied: $email'),
-              duration: const Duration(seconds: 3),
-              action: SnackBarAction(
-                label: 'OK',
-                onPressed: () {},
-              ),
-            ),
-          );
-        }
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('No email app found. Copied: $email')),
+        );
       }
-    } catch (e) {
-      // Fallback: copy email to clipboard
+    } catch (_) {
       await Clipboard.setData(ClipboardData(text: email));
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('No email app found. Email copied: $email'),
-            duration: const Duration(seconds: 3),
-            action: SnackBarAction(
-              label: 'OK',
-              onPressed: () {},
-            ),
-          ),
+          SnackBar(content: Text('No email app found. Copied: $email')),
         );
       }
     }
   }
 
   Future<void> _launchUrl(String url) async {
-    final Uri uri = Uri.parse(url);
+    final uri = Uri.parse(url);
     try {
-      if (await canLaunchUrl(uri)) {
-        await launchUrl(uri, mode: LaunchMode.externalApplication);
-      }
-    } catch (e) {
-      // Handle error silently or show a message
-    }
+      if (await canLaunchUrl(uri)) await launchUrl(uri, mode: LaunchMode.externalApplication);
+    } catch (_) {}
   }
 
   void _showRateDialog(BuildContext context) {
@@ -418,14 +172,10 @@ class ContactScreen extends StatelessWidget {
           "Thank you for using Klaro! If you're enjoying the app, please consider leaving us a rating on the App Store or Play Store.",
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Maybe Later"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Maybe Later")),
           FilledButton(
             onPressed: () {
               Navigator.pop(ctx);
-              // TODO: Add actual app store links
               _launchUrl('https://apps.apple.com/app/klaro');
             },
             child: const Text("Rate Now"),
@@ -455,97 +205,26 @@ class ContactScreen extends StatelessWidget {
               style: TextStyle(fontSize: 14, color: Colors.grey),
             ),
             const SizedBox(height: 16),
-            _buildDonationOption(
-              context,
+            _DonationOption(
               icon: PhosphorIcons.globe(),
               title: "Ko-fi",
               subtitle: "International payments",
               color: const Color(0xFF13C3FF),
-              onTap: () {
-                Navigator.pop(ctx);
-                _launchUrl('https://ko-fi.com/rolpppp');
-              },
+              onTap: () { Navigator.pop(ctx); _launchUrl('https://ko-fi.com/rolpppp'); },
             ),
             const SizedBox(height: 12),
-            _buildDonationOption(
-              context,
+            _DonationOption(
               icon: PhosphorIcons.wallet(),
               title: "GCash",
               subtitle: "Philippine payments",
               color: const Color(0xFF007DFE),
-              onTap: () {
-                Navigator.pop(ctx);
-                _showGCashDialog(context);
-              },
+              onTap: () { Navigator.pop(ctx); _showGCashDialog(context); },
             ),
           ],
         ),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
-          ),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
         ],
-      ),
-    );
-  }
-
-  Widget _buildDonationOption(
-    BuildContext context, {
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(12),
-        child: Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            border: Border.all(color: Colors.grey[300]!),
-            borderRadius: BorderRadius.circular(12),
-          ),
-          child: Row(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(10),
-                decoration: BoxDecoration(
-                  color: color.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, color: color, size: 24),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      subtitle,
-                      style: TextStyle(
-                        fontSize: 13,
-                        color: Colors.grey[600],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              Icon(PhosphorIcons.caretRight(), size: 20, color: Colors.grey),
-            ],
-          ),
-        ),
       ),
     );
   }
@@ -564,59 +243,26 @@ class ContactScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Text(
-              "Send your donation via GCash to:",
-              style: TextStyle(fontSize: 14),
-            ),
+            const Text("Send your donation via GCash to:", style: TextStyle(fontSize: 14)),
             const SizedBox(height: 16),
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: const Color(0xFF007DFE).withOpacity(0.1),
+                color: const Color(0xFF007DFE).withOpacity(0.08),
                 borderRadius: BorderRadius.circular(12),
-                border: Border.all(
-                  color: const Color(0xFF007DFE).withOpacity(0.3),
-                ),
               ),
-              child: Column(
+              child: const Column(
                 children: [
-                  const Text(
-                    "GCash Number",
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.grey,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  const Text(
-                    "0975 185 7056",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
-                      letterSpacing: 1,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  const Text(
-                    "RO*F GE***E G.",
-                    style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
+                  Text("GCash Number", style: TextStyle(fontSize: 12, color: Colors.grey, fontWeight: FontWeight.w500)),
+                  SizedBox(height: 8),
+                  Text("0975 185 7056", style: TextStyle(fontSize: 20, fontWeight: FontWeight.w700, letterSpacing: 1)),
+                  SizedBox(height: 4),
+                  Text("RO*F GE***E G.", style: TextStyle(fontSize: 14, fontWeight: FontWeight.w500)),
                 ],
               ),
             ),
             const SizedBox(height: 16),
-            Text(
-              "Thank you for your support! ☕",
-              style: TextStyle(
-                fontSize: 13,
-                color: Colors.grey[600],
-              ),
-              textAlign: TextAlign.center,
-            ),
+            Text("Thank you for your support! ☕", style: TextStyle(fontSize: 13, color: Colors.grey[600])),
           ],
         ),
         actions: [
@@ -625,20 +271,161 @@ class ContactScreen extends StatelessWidget {
               await Clipboard.setData(const ClipboardData(text: "09751857056"));
               if (ctx.mounted) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('GCash number copied to clipboard'),
-                    duration: Duration(seconds: 2),
-                  ),
+                  const SnackBar(content: Text('GCash number copied to clipboard'), duration: Duration(seconds: 2)),
                 );
               }
             },
             child: const Text("Copy Number"),
           ),
-          FilledButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: const Text("Done"),
+          FilledButton(onPressed: () => Navigator.pop(ctx), child: const Text("Done")),
+        ],
+      ),
+    );
+  }
+}
+
+// ── Private components ────────────────────────────────────────────────────────
+
+class _SectionLabel extends StatelessWidget {
+  final String label;
+  const _SectionLabel({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10, left: 4),
+      child: Text(
+        label.toUpperCase(),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.0,
+          color: Theme.of(context).colorScheme.onSurfaceVariant,
+        ),
+      ),
+    );
+  }
+}
+
+class _Tile extends StatelessWidget {
+  final IconData icon;
+  final Color iconColor;
+  final String title;
+  final String subtitle;
+  final VoidCallback onTap;
+
+  const _Tile({
+    required this.icon,
+    required this.iconColor,
+    required this.title,
+    required this.subtitle,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 10),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).colorScheme.onSurface.withOpacity(0.06),
+            blurRadius: 16,
+            spreadRadius: -4,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: Material(
+        color: Colors.transparent,
+        borderRadius: BorderRadius.circular(16),
+        child: InkWell(
+          onTap: onTap,
+          borderRadius: BorderRadius.circular(16),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: iconColor.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Icon(icon, size: 22, color: iconColor),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(title, style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      const SizedBox(height: 2),
+                      Text(subtitle, style: TextStyle(fontSize: 12, color: Colors.grey[500])),
+                    ],
+                  ),
+                ),
+                Icon(PhosphorIcons.caretRight(), size: 18, color: Colors.grey[400]),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+class _DonationOption extends StatelessWidget {
+  final IconData icon;
+  final String title;
+  final String subtitle;
+  final Color color;
+  final VoidCallback onTap;
+
+  const _DonationOption({
+    required this.icon,
+    required this.title,
+    required this.subtitle,
+    required this.color,
+    required this.onTap,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: onTap,
+        borderRadius: BorderRadius.circular(12),
+        child: Container(
+          padding: const EdgeInsets.all(16),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.06),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+                child: Icon(icon, color: color, size: 22),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600)),
+                    const SizedBox(height: 2),
+                    Text(subtitle, style: TextStyle(fontSize: 13, color: Colors.grey[600])),
+                  ],
+                ),
+              ),
+              Icon(PhosphorIcons.caretRight(), size: 18, color: Colors.grey),
+            ],
+          ),
+        ),
       ),
     );
   }

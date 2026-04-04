@@ -1,6 +1,7 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:klaro/core/services/database.dart';
 import 'package:klaro/core/logic/grading_system.dart';
+import 'package:klaro/core/services/preferences_service.dart';
 import 'package:klaro/features/course_management/logic/grade_calculator.dart';
 
 // Return type: Holds both real and projected grades
@@ -31,9 +32,10 @@ class CourseStanding {
 
 // StreamProvider.family for a single course's standing.
 // Re-emits whenever any assessment changes, fetching the course's
-// transmutation mode fresh each time so changes take effect immediately.
+// transmutation mode and the active grading system fresh each time.
 final courseStandingProvider = StreamProvider.family<CourseStanding, int>((ref, courseId) async* {
   final db = ref.watch(databaseProvider);
+  final gradingSystem = ref.watch(activeGradingSystemProvider);
 
   // Trigger recalculation whenever any assessment is added/edited/deleted.
   final allAssessmentsStream = db.select(db.assessments).watch();
@@ -88,9 +90,9 @@ final courseStandingProvider = StreamProvider.family<CourseStanding, int>((ref, 
 
     yield CourseStanding(
       realPercentage:      finalRealPct,
-      realGrade:           GradingSystem.convertToUPGrade(finalRealPct),
+      realGrade:           await GradingSystem.convertAsync(finalRealPct, gradingSystem, db),
       projectedPercentage: finalProjPct,
-      projectedGrade:      GradingSystem.convertToUPGrade(finalProjPct),
+      projectedGrade:      await GradingSystem.convertAsync(finalProjPct, gradingSystem, db),
       weightGraded:        realWeightUsed,
     );
   }

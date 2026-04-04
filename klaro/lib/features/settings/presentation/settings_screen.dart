@@ -107,18 +107,13 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            Colors.purple.shade400,
-                            Colors.blue.shade400,
-                          ],
-                        ),
+                        color: Theme.of(context).colorScheme.secondaryContainer,
                         borderRadius: BorderRadius.circular(6),
                       ),
-                      child: const Text(
+                      child: Text(
                         "SOON",
                         style: TextStyle(
-                          color: Colors.white,
+                          color: Theme.of(context).colorScheme.onSecondaryContainer,
                           fontSize: 8,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.3,
@@ -383,10 +378,9 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                     width: 40,
                     height: 40,
                     padding: const EdgeInsets.all(6),
-                    decoration: BoxDecoration(
+                    decoration: const BoxDecoration(
                       color: Colors.white,
                       shape: BoxShape.circle,
-                      border: Border.all(color: Colors.grey.shade300),
                     ),
                     child: Image.asset('assets/grade_presets/up_logo.png', fit: BoxFit.contain),
                   )
@@ -522,10 +516,6 @@ class _SettingsScreenState extends ConsumerState<SettingsScreen> {
                         decoration: BoxDecoration(
                           color: interval['color'] as Color,
                           borderRadius: BorderRadius.circular(8),
-                          border: Border.all(
-                            color: Colors.grey.shade300,
-                            width: 1,
-                          ),
                         ),
                         child: Row(
                           children: [

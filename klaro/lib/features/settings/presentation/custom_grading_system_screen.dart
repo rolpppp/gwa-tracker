@@ -191,9 +191,8 @@ class _CustomGradingSystemScreenState extends ConsumerState<CustomGradingSystemS
           width: 40,
           height: 40,
           decoration: BoxDecoration(
-            color: isUPTacloban ? Colors.white : Colors.purple.shade100,
+            color: Colors.white,
             shape: BoxShape.circle,
-            border: isUPTacloban ? Border.all(color: Colors.grey.shade300) : null,
           ),
           child: isUPTacloban
               ? Padding(
@@ -296,7 +295,6 @@ class _CustomGradingSystemScreenState extends ConsumerState<CustomGradingSystemS
                   decoration: BoxDecoration(
                     color: Colors.white,
                     borderRadius: BorderRadius.circular(8),
-                    border: Border.all(color: Colors.grey.shade300),
                   ),
                   child: Image.asset('assets/grade_presets/up_logo.png', fit: BoxFit.contain),
                 ),
@@ -319,9 +317,8 @@ class _CustomGradingSystemScreenState extends ConsumerState<CustomGradingSystemS
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: Colors.blue.shade50,
+                  color: Theme.of(context).colorScheme.primaryContainer.withOpacity(0.2),
                   borderRadius: BorderRadius.circular(8),
-                  border: Border.all(color: Colors.blue.shade200),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -599,9 +596,8 @@ class CustomGradingScalesScreen extends ConsumerWidget {
             margin: const EdgeInsets.all(16),
             padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
-              color: Colors.purple.shade50,
+              color: Theme.of(context).colorScheme.secondaryContainer.withOpacity(0.2),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.purple.shade200),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -682,7 +678,7 @@ class CustomGradingScalesScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: const Color(0xFF191C1E),
                                 ),
                               ),
                             ),
@@ -693,7 +689,7 @@ class CustomGradingScalesScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: const Color(0xFF191C1E),
                                 ),
                               ),
                             ),
@@ -704,7 +700,7 @@ class CustomGradingScalesScreen extends ConsumerWidget {
                                 style: TextStyle(
                                   fontSize: 13,
                                   fontWeight: FontWeight.bold,
-                                  color: Colors.black87,
+                                  color: const Color(0xFF191C1E),
                                 ),
                               ),
                             ),
@@ -744,7 +740,6 @@ class CustomGradingScalesScreen extends ConsumerWidget {
                           decoration: BoxDecoration(
                             color: Colors.white,
                             borderRadius: BorderRadius.circular(8),
-                            border: Border.all(color: Colors.grey.shade200),
                             boxShadow: [
                               BoxShadow(
                                 color: Colors.black.withOpacity(0.02),
@@ -770,7 +765,7 @@ class CustomGradingScalesScreen extends ConsumerWidget {
                                         style: const TextStyle(
                                           fontSize: 14,
                                           fontWeight: FontWeight.w600,
-                                          color: Colors.black87,
+                                          color: const Color(0xFF191C1E),
                                         ),
                                       ),
                                     ),

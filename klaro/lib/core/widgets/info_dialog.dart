@@ -51,7 +51,7 @@ void showKlaroInfoDialog(
                     : Colors.grey.shade100,
                 borderRadius: BorderRadius.circular(10),
                 border: Border.all(
-                  color: Theme.of(context).dividerColor.withOpacity(0.3),
+                  color: Theme.of(context).dividerColor.withOpacity(0.15),
                 ),
               ),
               child: Text(
